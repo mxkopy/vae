@@ -1,9 +1,9 @@
 # Variational Autoencoders
 The latent space of an autoencoder is basically the model's 'internal representation' of some data. It's not a given, though, that this represenation is organized in any meaningful way. 
 
-VAEs solve this problem by regularizing (i.e. smoothing) latent representations according to the Kullback-Leibler distance. This forces data points that are more alike closer together within latent space. And this lets you smoothly interpolate between images, which can be useful for generative tasks.
+VAEs solve this problem by regularizing (i.e. smoothing) latent representations by minimizing the Kullback-Leibler distance between them. This forces data points that are more alike to be closer together within latent space. And this lets you smoothly interpolate between data, which can be useful for generative tasks.
 
-The reason this works is because the model is learning a latent probability distribution, rather than fixed relationships. By introducing randomness (variations!) into the input of the decoder, the effect of an individual data point is 'smoothed out' in latent space. 
+The reason this works is because the model is learning a latent probability distribution, rather than fixed relationships/points. By introducing randomness (variations!) into the input of the decoder, the effect of an individual data point is 'smoothed out' in latent space. 
 
 Apparently, some probability distributions are better than others. Hence, I implemented the Dirichlet-VAE from https://arxiv.org/abs/1901.02739. 
 
@@ -11,10 +11,10 @@ Apparently, some probability distributions are better than others. Hence, I impl
 
 First, make sure you have all the dependencies installed. deps.sh is a convenience script for this purpose. You'll also want an X server or similar - if you don't know what this is, then you're fine. 
 
-In theory, this repo provides a modally-general library for Dirichlet VAEs. It's agnostic to which specific encoder and decoder you use, as long as the outputs make sense (i.e. they must be arrays of size [model_size, ...]). Subtyping AutoEncoder allows a type to use the AutoEncoder forward-pass, as it has these fields
+In theory, this repo provides a modally-general library for Dirichlet VAEs. It's agnostic to which specific encoder and decoder you use, as long as the outputs make sense (i.e. they must be arrays of size [model_size, ...]). Subtyping AutoEncoder allows a type to use the AutoEncoder forward-pass, as long as it has these fields:
 
 ```
-mutable struct $T <: AutoEncoder
+mutable struct T <: AutoEncoder
 
   encoder
   decoder
@@ -66,11 +66,11 @@ If this looks insane, that's because it kind of is. I'm trying to find more eleg
 After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' for .wav audio. Julia is agnostic to the filesystem used, so you can sshfs or ln -s a COCO training dataset or similar (I use train2017). The DataIterator library stands fairly well alone, and is plug-and-play provided there aren't any formats in the dataset that Julia can't handle (.ogg, .mov, ...). For example, here are the function signatures for some of the high-level BatchIterators:
 
 ```
-ImageIterator(;directory="data/image/", batches=1, shuffle=false)
-AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false)
+ImageIterator(;directory="data/image/", batches=1, shuffle=false) -> Array{T, 4}
+AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false) -> Array{T, 4}
 ```
 
-The VideoIterator is buggy due to the idiosyncracies of decoding video for arbitrary formats.
+The VideoIterator is buggy/slow due to the idiosyncracies of decoding video.
 
 ---
 
@@ -84,4 +84,4 @@ and watch the blurry images. Various arguments and switches are listed in Main.j
 
 ---
 
-There are various easter eggs throughout this mess as well, such as an incredibly powered CUDA-compatible broadcast macro, an implemented but unused MelResNet and an Optimiser that simply removes NaN from gradients and weights. Please, find a use for this insanity!
+There are various easter eggs throughout this mess as well, such as an incredibly powered CUDA-compatible broadcast macro, an implemented but unused MelResNet and an Optimiser that simply removes NaN and Inf from gradients and weights. Please, find a use for this insanity!
