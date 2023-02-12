@@ -1,9 +1,7 @@
 # Variational Autoencoders
 The latent space of an autoencoder is the model's compressed 'internal' representation of some data. It's not a given, though, that this represenation is organized in any meaningful way. 
 
-VAEs solve this problem by regularizing (i.e. smoothing) latent representations by minimizing the Kullback-Leibler distance between them. This clusters data points that are similar together in latent space, which lets you smoothly interpolate between them, opening up some fun generative possibilities.
-
-This works because the model is learning a latent probability distribution, rather than fixed relationships/points. By introducing randomness (variations!) into the input of the decoder, the effect of an individual data point is 'smoothed out' in latent space. 
+VAEs solve this problem in two ways: learning a probability distribution rather than a fixed set of points, and by minimizing the Kullback-Leibler divergence between it and a known, smooth distribution. By introducing randomness (variations!) into the decoder, the effects individual data points are 'smoothed out' in latent space, and the KLD constrains them to be regular.
 
 Apparently, some probability distributions are better than others. Hence, I implemented the Dirichlet-VAE from https://arxiv.org/abs/1901.02739. 
 
