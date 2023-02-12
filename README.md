@@ -85,7 +85,7 @@ end
 
 Sometimes, it's helpful to persist state between iterations (e.g. schedulers, visualizers, etc.), which is why we have this nested abomination. I plan to change this.
 
-Note that the ELBO estimate (which is KL distance plus some other stuff) isn't included in this template, so you'll have to add that as well if you want regularized latent spaces. I also plan to change this.
+Note that the ELBO estimate (which is KL divergence plus some other stuff) isn't included in this template, so you'll have to add that as well if you want regularized latent spaces. I also plan to change this.
 
 # Data
 After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' with .wav audio. Julia is agnostic to the filesystem used, so you can sshfs or ln -s a COCO training dataset or similar (I use train2017). 
@@ -122,11 +122,16 @@ However; if you've gotten this far, you may want to roll your own, which is not 
 AutoEncoderOutputs.jl provides a set of functions that make it easier to visualize manipulations in latent space. A sample script is commented out at the bottom. For now, it's expressely for the ResNetVAE.
 
 # Potential Issues
-The data folder is hardcoded for now. If it's not there, or its permissions are restrictive, then Julia may complain about not being able to find/access your data. 
-If you don't have an X server or similar, ImageView will unfortunately throw. However, if you neuter the visualizers in Visualizations.jl, it will work. 
-Mixed memory and mixed precision aren't supported. 
+The data folder is hardcoded for now. If it's not there, or its permissions are restrictive, then Julia may complain about not being able to find/access your data.
+
+If you don't have an X server or similar, ImageView will unfortunately throw. However, if you neuter the visualizers in Visualizations.jl, it will work.
+
+Mixed memory and mixed precision aren't supported.
+
 This isn't a package, so the source dependency tree is important to note if you want to add more files.
+
 DDSP isn't finished.
+
 DataIterators are not yet serializable due to how reading video seems to work - it may get removed because of this.
 
 # Etc
