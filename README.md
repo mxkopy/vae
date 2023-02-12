@@ -99,7 +99,7 @@ ImageIterator(;directory="data/image/", batches=1, shuffle=false) -> Array{T, 4}
 AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false) -> Array{T, 4}
 ```
 
-I do not recommend using VideoIterator, as video is weird. Video readers don't persist quite as nicely as directory readers.
+I do not recommend using VideoIterator, as video is weird.
 
 # Optimiser
 The final ingredient required for a training loop is an optimiser. The default
@@ -108,7 +108,7 @@ The final ingredient required for a training loop is an optimiser. The default
 Optimiser( ClipNorm(1f0), NoNaN(), ADAM(lr, (0.9, 0.99)) )
 ```
 
-works well, but it can easily be tuned to your case (see https://fluxml.ai/Flux.jl/stable/training/optimisers/ for inspiration). A word of warning - the functions involved in sampling the Dirichlet distribution can grow explosively, so including the NoNaN() optimiser is highly recommended.  
+works well, but it can readily be tuned to your case (see https://fluxml.ai/Flux.jl/stable/training/optimisers/ for inspiration). A word of warning - the functions involved in sampling the Dirichlet distribution can grow explosively, so including the NoNaN() optimiser is highly recommended.  
 
 # Training
 Training.jl provides the following function:
@@ -129,6 +129,7 @@ If you don't have an X server or similar, ImageView will unfortunately throw. Ho
 Mixed memory and mixed precision aren't supported. 
 This isn't a package, so the source dependency tree is important to note if you want to add more files.
 DDSP isn't finished.
+DataIterators are not yet serializable due to how reading video seems to work - it may get removed because of this.
 
 # Etc
 This was a learning project more than anything for me, so I really went all over the place. If manipulating multidimensional arrays is something you do often, I recommend checking out SomeMacros.jl, which provides a very powerful CUDA-compatible broadcast macro. I found it to be useful in implementing DDSP.
