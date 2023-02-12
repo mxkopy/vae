@@ -5,7 +5,3 @@
 *.bson
 *.jpeg
 *.jpg
-data/youtube_ids
-data/kd_tree
-data/dict
-data/glove.txt
