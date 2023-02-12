@@ -60,7 +60,7 @@ You can also use the macro
 @autoencoder T
 ```
 
-which creates a subtype T of AutoEncoder, and provides a convenience constructor 
+which does all the above for you, and provides a convenience constructor 
 
 ```
 T(encoder, decoder, model_size; precision=Float32, device=gpu)
