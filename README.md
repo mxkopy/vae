@@ -84,4 +84,4 @@ and watch the blurry images. Various arguments and switches are listed in Main.j
 
 ---
 
-There are various easter eggs throughout this mess as well, such as an incredibly powered CUDA-compatible broadcast macro, an implemented but unused MelResNet and an Optimiser that simply removes NaN and Inf from gradients and weights. Please, find a use for this insanity!
+There are various easter eggs throughout this mess as well, such as an incredibly powered CUDA-compatible broadcast macro, an implemented but unused MelResNet and an Optimiser that simply removes NaN and Inf from gradients and weights. Please, find a use for this madness!
