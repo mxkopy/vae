@@ -1,5 +1,5 @@
 # Variational Autoencoders
-The latent space of an autoencoder is basically the model's 'internal representation' of some data. It's not a given, though, that this represenation is organized in any meaningful way. 
+The latent space of an autoencoder is the model's 'internal' representation of some data. It's not a given, though, that this represenation is organized in any meaningful way. 
 
 VAEs solve this problem by regularizing (i.e. smoothing) latent representations by minimizing the Kullback-Leibler distance between them. This forces data points that are more alike to be closer together within latent space. And this lets you smoothly interpolate between data, which can be useful for generative tasks.
 
