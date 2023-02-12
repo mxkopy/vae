@@ -132,6 +132,8 @@ macro autoencoder( T::Symbol )
             device
         
         end;
+        
+        Flux.@functor $T (encoder, decoder, alpha, beta);
 
         function $T(encoder, decoder, model_size; precision=Float32, device=gpu)
 
@@ -144,7 +146,6 @@ macro autoencoder( T::Symbol )
         
         end;
 
-        Flux.@functor $T (encoder, decoder, alpha, beta)
     ))
 
 end
