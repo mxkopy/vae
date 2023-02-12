@@ -21,7 +21,7 @@ end
 
 
 
-function train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, data::DataIterator, filename::String; save_freq=10, epochs=1 )
+function train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, data::Union{DataIterator, BatchIterator}, filename::String; save_freq=10, epochs=1 )
 
     trainmode!(model)
 
