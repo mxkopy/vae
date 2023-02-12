@@ -9,7 +9,7 @@ Apparently, some probability distributions are better than others. Hence, I impl
 
 # Usage
 
-First, make sure you have all the dependencies installed. deps.sh is a convenience script for this purpose. You'll also want an X server or similar - if you don't know what this is, then you're fine. 
+First, make sure you have all the dependencies installed. deps.sh is a convenience script for this purpose. You'll also want an X server or similar for visualizations - if you don't know what this is, then you're fine. 
 
 In theory, this repo provides a modally-general library for Dirichlet VAEs. It's agnostic to which specific encoder and decoder you use, as long as the outputs make sense (i.e. they must be arrays of size [model_size, ...]). Subtyping AutoEncoder allows a type to use the AutoEncoder forward-pass, as long as it has these fields:
 
