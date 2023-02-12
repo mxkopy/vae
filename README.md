@@ -8,9 +8,19 @@ This works because the model is learning a latent probability distribution, rath
 Apparently, some probability distributions are better than others. Hence, I implemented the Dirichlet-VAE from https://arxiv.org/abs/1901.02739. 
 
 # Basic Usage
-First, make sure you have all the dependencies installed. deps.sh is a convenience script for this purpose. You'll also want an X server or similar for visualizations - if you don't know what this is, then you're fine. 
+First, run the following to install the dependencies:
 
-Then, make sure you have images in the data/image folder - they will be the training set.
+```
+./deps.sh
+```
+
+Then, make sure you have images in the data/image directory - they will be the training set. It should look something like
+
+```
+./data/image/0001.jpg
+./data/image/0002.jpg
+...
+```
 
 Now, you can run:
 
@@ -112,6 +122,13 @@ However; if you've gotten this far, you may want to roll your own, which is not 
 
 # Playing Around With It
 AutoEncoderOutputs.jl provides a set of functions that make it easier to visualize manipulations in latent space. A sample script is commented out at the bottom. For now, it's expressely for the ResNetVAE.
+
+# Potential Issues
+The data folder is hardcoded for now. If it's not there, or its permissions are restrictive, then Julia may complain about not being able to find/access your data. 
+If you don't have an X server or similar, ImageView will unfortunately throw. However, if you neuter the visualizers in Visualizations.jl, it will work. 
+Mixed memory and mixed precision aren't supported. 
+This isn't a package, so the source dependency tree is important to note if you want to add more files.
+DDSP isn't finished.
 
 # Etc
 This was a learning project more than anything for me, so I really went all over the place. If manipulating multidimensional arrays is something you do often, I recommend checking out SomeMacros.jl, which provides a very powerful CUDA-compatible broadcast macro. I found it to be useful in implementing DDSP.
