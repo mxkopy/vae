@@ -28,7 +28,7 @@ julia Main.jl --train
 
 By default, this will train an image model and visualize the output and input data in two GTK windows. 
 
-There are various switches and flags with descriptive names in Main.jl. However, many are unused and the CLI will most likely soon be deprecated.
+There are various switches and flags with descriptive names in Main.jl. However, many are unused and the CLI will most likely soon be replaced.
 
 # General Usage
 This repo provides a modality-independent library for Dirichlet VAEs. It's agnostic to its encoder and decoder, as long as their outputs make sense (i.e. they must output arrays of size [model_size, ...]). Subtyping AutoEncoder allows the use of the AutoEncoder forward-pass, provided the subtype has at least these fields:
