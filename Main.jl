@@ -1,6 +1,4 @@
-include("AutoEncoderOutputs.jl")
-# include("ResNet.jl")
-# include("DDSP.jl")
+include("Training.jl")
 
 using ImageView, ArgParse, Flux.Optimise, Gtk, BSON, .ResNet, .DDSP, .AutoEncoders
 

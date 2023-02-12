@@ -1,7 +1,3 @@
-module AutoEncoders
-
-export sample_dirichlet, alpha_mme, kl_divergence, AutoEncoder, ELBO, convert, NoNaN
-
 using Flux, Serialization, WAV, Zygote, Distributions, CUDA, SpecialFunctions, Printf
 
 using SpecialFunctions: gamma as Γ, loggamma as logΓ, digamma as ψ
@@ -51,8 +47,6 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     end
 
-
-
     P̄ = α_true .* 0
 
     function mme(P::AbstractVector, n)
@@ -62,8 +56,6 @@ function alpha_mme(α_true::AbstractVector{T}) where T
         return S(P, n) .* P̄
 
     end
-
-    
 
     N::T = 0.0
 
@@ -189,8 +181,5 @@ function Flux.Optimise.apply!(o::NoNaN, x, Δ::AbstractArray{T}) where T
     sanitize(δ)::T = isnan(δ) || isinf(δ) ? 0.0 : δ
 
     Δ = sanitize.(Δ)
-
-end
-
 
 end

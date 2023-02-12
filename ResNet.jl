@@ -1,7 +1,5 @@
 module ResNet
 
-export ResNetVAE
-
 include("AutoEncoders.jl")
 include("DataIterators.jl")
 

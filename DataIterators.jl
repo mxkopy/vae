@@ -1,7 +1,3 @@
-module DataIterators
-
-export ImageIterator, VideoIterator, AudioIterator, to_color, from_color, preprocess_image, preprocess_audio
-
 using FileIO, VideoIO, Images, ImageTransformations, Colors, WAV, CUDA, Statistics, Random
 
 
@@ -273,16 +269,5 @@ function ImageIterator(;directory="data/image/", batches=1, shuffle=false)
     iterator = ImageData(directory=directory, shuffle=shuffle)
 
     return BatchIterator(batches, iterator, preprocess_image)
-
-end
-
-
-# function save_data( itr::BatchIterator )
-
-
-# end
-
-# function load_data( )
-
 
 end

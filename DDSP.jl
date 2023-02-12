@@ -1,7 +1,3 @@
-module DDSP
-
-export AudioVAE
-
 include("AutoEncoders.jl")
 include("DataIterators.jl")
 
@@ -109,7 +105,7 @@ function AudioVAE(model_size; device=gpu)
 
 end
 
-end
+
 
 include("SomeMacros.jl")
 
