@@ -70,7 +70,7 @@ ImageIterator(;directory="data/image/", batches=1, shuffle=false) -> Array{T, 4}
 AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false) -> Array{T, 4}
 ```
 
-The VideoIterator is buggy/slow due to the idiosyncracies of decoding video.
+The VideoIterator is buggy/slow due to the madness of decoding video. Did you know that associating a timestamp to a frame is not a solved problem? And here I was, thinking that video is just a bunch of images at different time-steps. The naivete.
 
 ---
 
