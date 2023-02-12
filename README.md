@@ -11,7 +11,7 @@ Apparently, some probability distributions are better than others. Hence, I impl
 
 First, make sure you have all the dependencies installed. deps.sh is a convenience script for this purpose. You'll also want an X server or similar for visualizations - if you don't know what this is, then you're fine. 
 
-In theory, this repo provides a modally-general library for Dirichlet VAEs. It's agnostic to which specific encoder and decoder you use, as long as the outputs make sense (i.e. they must be arrays of size [model_size, ...]). Subtyping AutoEncoder allows a type to use the AutoEncoder forward-pass, as long as it has these fields:
+In theory, this repo provides a modally-general library for Dirichlet VAEs. It's agnostic to which specific encoder and decoder you use, as long as the outputs make sense (i.e. they must be arrays of size [model_size, ...]). Subtyping AutoEncoder allows the use the AutoEncoder forward-pass, as long as the type has at least these fields:
 
 ```
 mutable struct T <: AutoEncoder
@@ -28,10 +28,9 @@ mutable struct T <: AutoEncoder
 end
 
 Flux.@functor T (encoder, decoder, alpha, beta, decode)
-
 ```
 
-and of course, the output of each field that is a function makes sense. 
+and of course, the output of each field that is a function makes sense. The last line registers the type with Flux, so it can be trained and moved between the gpu and cpu.
 
 You can also use the macro
 
@@ -63,14 +62,14 @@ end
 
 If this looks insane, that's because it kind of is. I'm trying to find more elegant ways to visualize a model's output during training, my lack of which makes this indirection necessary. Unfortunately I absolutely slept on macros, which are probably the solution. 
 
-After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' for .wav audio. Julia is agnostic to the filesystem used, so you can sshfs or ln -s a COCO training dataset or similar (I use train2017). The DataIterator library stands fairly well alone, and is plug-and-play provided there aren't any formats in the dataset that Julia can't handle (.ogg, .mov, ...). For example, here are the function signatures for some of the high-level BatchIterators:
+After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' with .wav audio. Julia is agnostic to the filesystem used, so you can sshfs or ln -s a COCO training dataset or similar (I use train2017). The DataIterator library stands fairly well alone, and is plug-and-play provided there aren't any formats in the dataset that Julia can't handle (.ogg, .mov, ...). For example, here are the function signatures for some of the high-level BatchIterators:
 
 ```
 ImageIterator(;directory="data/image/", batches=1, shuffle=false) -> Array{T, 4}
 AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false) -> Array{T, 4}
 ```
 
-The VideoIterator is buggy/slow due to the madness of decoding video. Did you know that associating a timestamp to a frame is not a solved problem? And here I was, thinking that video is just a bunch of images at different time-steps. The naivete.
+The VideoIterator is buggy/slow due to the madness of decoding video. Did you know that associating a correct timestamp to a frame is not a solved problem? And here I was, thinking that video is just a bunch of images at different time-steps. The naivete.
 
 ---
 
@@ -80,8 +79,8 @@ So, in practice, you should fill data/image, run
 julia Main.jl --train
 ```
 
-and watch the blurry images. Various arguments and switches are listed in Main.jl. Some are not used and I'm debating rewriting the CLI entirely, so I won't bother to go into too much detail. 
+and watch the blurry images. Various arguments, switches and their defaults are listed in Main.jl with decently descriptive names. Some aren't used and I'm debating rewriting the CLI entirely, so I won't bother to go into too much detail. 
 
 ---
 
-There are various easter eggs throughout this mess as well, such as an incredibly powered CUDA-compatible broadcast macro, an implemented but unused MelResNet and an Optimiser that simply removes NaN and Inf from gradients and weights. Please, find a use for this madness!
+There are various easter eggs throughout this mess as well, such as an incredibly powered CUDA-compatible broadcast macro, an implemented but unused MelResNet, an Optimiser that removes NaN and Inf from gradients and weights, and an interactive REPL-based interpolator. Please, find a use for this madness!
