@@ -21,7 +21,7 @@ end
 
 
 
-function train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, data::Union{DataIterator, BatchIterator}, filename::String; save_freq=10, epochs=1 )
+function train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, loss_fn::Function, data::Union{DataIterator, BatchIterator}, filename::String; save_freq=10, epochs=1 )
 
     trainmode!(model)
 
@@ -31,7 +31,7 @@ function train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, 
 
         callback = Flux.throttle( () -> save( filename, model, optimizer ), save_freq )
 
-        Flux.Optimise.train!( loss, parameters, data, optimizer, cb=callback )
+        Flux.Optimise.train!( loss_fn, parameters, data, optimizer, cb=callback )
 
     end
 

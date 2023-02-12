@@ -124,9 +124,11 @@ model = model |> device
 
 if args["train"]
 
+    loss_fn = loss(model)
+
     data = (data_iterators[typeof(model)])()
 
-    train( model, optimizer, data, filename, save_freq=args["save-freq"], epochs=args["epochs"] )
+    train( model, optimizer, loss_fn, data, filename, save_freq=args["save-freq"], epochs=args["epochs"] )
 
 end
 
