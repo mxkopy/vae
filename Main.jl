@@ -1,6 +1,6 @@
 include("Training.jl")
 
-using ImageView, ArgParse, Flux.Optimise, Gtk, BSON, .ResNet, .DDSP, .AutoEncoders
+using ImageView, ArgParse, Flux.Optimise, Gtk, BSON
 
 function arguments()
 
@@ -98,17 +98,10 @@ models = Dict(
 
 )
 
-losses = Dict(
-
-    Main.ResNet.AutoEncoders.AutoEncoder => ResNet.loss,
-    Main.DDSP.AutoEncoders.AutoEncoder   => DDSP.loss
-
-)
-
 data_iterators = Dict(
 
-    Main.ResNet.AutoEncoders.AutoEncoder => () ->  ImageIterator(;data_args...),
-    Main.DDSP.AutoEncoders.AutoEncoder   => () ->  AudioIterator(;data_args...)
+    ResNetVAE => () ->  ImageIterator(;data_args...),
+    DDSP      => () ->  AudioIterator(;data_args...)
 
 )
 
@@ -125,17 +118,6 @@ else
     model, optimizer = loaded["model"], loaded["optimizer"]
 
 end
-
-output_name = args["type"] == "audio" ? "audio_test.wav" :
-              args["type"] == "image" ? "image_test.jpg" :
-              args["type"] == "video" ? "video_test.mp4" :
-              "test"
-
-
-save_func   = args["type"] == "audio" ? save_audio :
-              args["type"] == "image" ? save_video :
-              args["type"] == "video" ? save_video :
-              exit()
 
 
 model = model |> device

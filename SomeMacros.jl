@@ -2,15 +2,16 @@ using Base.Iterators: product
 
 # broadcasts a function call over selected axes
 
-# @broadcast F(args...) arg1[select1....], arg2[select2....] ... (output_idx_order...)
+# @broadcast F(args...) arg1[axis_selectors....], arg2[axis_selectors....] ... (output_idx_order...)
 
 # example: 
 # @broadcast f(x, y) x[i, :, j] y[i, :] (i, j, 2, 1)
 
 # the above command execute f(x[i, :, j], y[i, :, y3]) where i, j, y3 iterate through axes(x, 1) == axes(y, 1), axes(x, 3), axes(y, 3)
-# note that the selectors are padded. this means that if z has shape (10, 20, 30), then selecting z[:] will iterate over z[:, i, k] - this can be very costly.
+# note that the selectors are padded to fill the rank of the input. 
+# this means that if z has shape (10, 20, 30), then selecting z[:] will iterate over z[:, i, k] - this can be very costly.
 
-# if a selector sn doesn't satisfy axes(x, n) == axes(y, n), then a warning will be printed but the program will continue
+# if a selector n doesn't satisfy axes(x, n) == axes(y, n), then a warning will be printed but the program will continue
 
 # the last argument of the macro is a tuple specifying the permututations of the output dimensions. 
 # numbers specify the position of the corresponding function output 

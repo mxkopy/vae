@@ -1,16 +1,14 @@
-include("ResNet.jl")
-include("DDSP.jl")
+include("Losses.jl")
 
-using BSON, ImageView, Gtk, .AutoEncoders, .ResNet, .DDSP, .DataIterators
-using .AutoEncoders: sample_dirichlet
+using BSON, ImageView, Gtk
 
 # you should probably use these in the REPL
 
-function latent_params( model )
+function latent_params( model::AutoEncoder )
 
     return function( A, B )
 
-        B = ResNet.interpolate_data(A, B) |> collect
+        B = interpolate_data(A, B) |> collect
 
         _, _, a1, b1, l1 = model( A |> DataIterators.preprocess_image .|> model.precision |> model.device )
 
@@ -22,7 +20,7 @@ function latent_params( model )
 
 end
 
-function dirichlet_sampler( model )
+function dirichlet_sampler( model::AutoEncoder )
 
     return function(alpha, beta, params=ones( size(alpha) ) .|> model.precision |> model.device )
 
@@ -33,11 +31,11 @@ function dirichlet_sampler( model )
 end
 
 
-function latent_visualizer( model )
+function latent_visualizer( model::AutoEncoder )
 
     visualize = ResNet.single_visualizer()
 
-    return function( latent )
+    return function( latent::AbstractArray )
 
         visualize( model.decoder(latent)[:, :, :, 1] |> cpu |> from_color )
 

@@ -1,9 +1,4 @@
-module ResNet
-
-include("AutoEncoders.jl")
-include("DataIterators.jl")
-
-using Flux, Serialization, Interpolations, WAV, Zygote, Distributions, CUDA, Images, ImageView, Gtk, Printf, .AutoEncoders, .DataIterators
+using Flux, Serialization, Interpolations, WAV, Zygote, Distributions, CUDA, Images, ImageView, Gtk, Printf
 
 using Zygote: @ignore
 
@@ -153,7 +148,7 @@ end
 
 
 
-function encoder( model_size )
+function resnet_vae_encoder( model_size )
 
     encoder      = pre_encoder( model_size )
 
@@ -171,7 +166,7 @@ end
 
 
 
-function decoder( model_size )
+function resnet_vae_decoder( model_size )
 
     decoder       = post_decoder( model_size )
 
@@ -185,174 +180,7 @@ function decoder( model_size )
 
 end
 
+@autoencoder ResNetVAE
 
-function interpolate_data(out, data)
+ResNetVAE( model_size::Int; device=gpu ) = ResNetVAE( resnet_vae_encoder(model_size), resnet_vae_decoder(model_size), model_size, device=device )
 
-    mode = map( o -> o == 1 ? NoInterp() : BSpline(Linear()), size(out) )
-
-    axes = map( ((d, o),) -> range(1, d, o), zip( size(data), size(out) ) )
-
-    itp  = interpolate(data, mode)
-
-    return itp( axes... )
-
-end
-
-# this creates a loss function that's used in training
-# includes stuff like visualizers & scheduling
-# i don't imagine super abstract usage so for now many things are hardcoded
-
-# schedule_period is a pair giving the number of iterations for the annealing & fixed loss, respectively
-# from https://arxiv.org/pdf/1903.10145.pdf
-
-function loss( model; α_true=fill(0.98, length(model.alpha.bias)) .|> model.precision |> model.device, burn_in=10000, schedule_period=400=>250 )
-
-    visualize = visualizer(model)
-
-    schedule  = vcat(range(0.0, 1f-3, first(schedule_period)), fill(1.0, last(schedule_period))) |> Iterators.cycle |> Iterators.Stateful
-
-    mme, n    = alpha_mme(α_true), 0
-
-    return @noinline function(data)
-
-        encoder, decoder, α, β, latent = model(data)
-
-        data    = @ignore interpolate_data(decoder, data) .|> model.precision |> model.device
-        
-        w       = @ignore first(schedule)
-
-        α_t     = @ignore mme(latent)
-
-        α_true  = @ignore (n += 1) > burn_in ? α_t : α_true
-
-        elbo    = ELBO(decoder, α, α_true)
-
-        r_loss  = Flux.Losses.mse(decoder, data)
-
-        Zygote.ignore() do  
-    
-            visualize(data, decoder)
-    
-            @printf "\nr_loss %.5e -elbo %.5e %i" r_loss -elbo n
-            flush(stdout)
-    
-        end
-
-        return r_loss - elbo * 1f-2
-
-    end
-
-end
-
-
-
-function single_visualizer(size=(256, 256))
-
-    gd = imshow( rand(RGB, size) )
-
-    signal  = ImageView.Observable( rand(RGB, size) )
-
-    imshow( gd["gui"]["canvas"], signal )
-
-    return function (image)
-
-        signal[] = image
-        # ImageView.push!(signal, image)
-    
-    end
-
-end
-
-function grid_visualizer( grid, size=(128, 128) )
-
-    gui = imshow_gui(size, grid) 
-
-    canvases = gui["canvas"]
-
-    coords   = Iterators.product( 1:first(grid), 1:last(grid) ) |> collect
-
-    signals  = map( _ -> ImageView.Observable(rand(RGB, size)), coords)
-
-    for (coord, signal) in zip(coords, signals)
-
-        imshow(canvases[coord...], signal)
-
-    end
-
-    Gtk.showall(gui["window"])
-
-    return function(images) 
-
-        for (signal, image) in zip(signals, images)
-
-            signal[] = image
-
-            # ImageView.push!(signal, image)
-
-        end
-
-    end
-
-end
-
-
-
-function visualizer(model, grid_size=(256, 256))
-
-    # magic = x -> gcd( x / (2^Int(floor(log2(sqrt(x))))) |> floor |> Int, x )
-
-    # model_size = length(model.alpha.bias)
-
-    # grid  = ( magic(model_size), model_size ÷ magic(model_size) )
-
-    # grid_vis, data_vis = grid_visualizer(grid, grid_size), single_visualizer(grid_size)
-
-    # return @noinline function(encoder, decoder)
-
-        # latents = map( 1:length(model.alpha.bias) ) do i
-
-        #     mask = [ idx[1] == i ? 1f0 : 0f0 for idx in CartesianIndices(latent) ] |> model.device
-
-        #     return mask .* latent
-
-        # end
-
-        # images = map( latents ) do L          
-            
-        #     return model.decoder( L )[:, :, :, 1] |> cpu |> from_color
-
-        # end
-
-        # images = map( 1:length(model.alpha.bias) ) do i
-
-        #     out = encoder[i, :, :, 1]
-
-        #     out = (out .- minimum(out)) ./ (maximum(out) - minimum(out))
-
-        #     return out |> cpu |> A -> RGB.(A, A, A)
-
-        # end
-
-        # grid_vis(images), data_vis(decoder[:, :, :, 1] |> cpu |> from_color)
-
-    # end
-
-    L, R = single_visualizer(grid_size), single_visualizer(grid_size)
-
-    return function(decoder, data)
-
-        decoder[:, :, :, 1] |> cpu |> from_color |> L, data[:, :, :, 1] |> cpu |> from_color |> R
-
-    end
-
-end
-
-
-function ResNetVAE( model_size; device=gpu )
-
-    return AutoEncoder( encoder(model_size), decoder(model_size), model_size, device=device )
-
-end
-
-
-end

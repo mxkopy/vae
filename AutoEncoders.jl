@@ -2,7 +2,6 @@ using Flux, Serialization, WAV, Zygote, Distributions, CUDA, SpecialFunctions, P
 
 using SpecialFunctions: gamma as Γ, loggamma as logΓ, digamma as ψ
 using Zygote: @ignore
-using CUDA: @allowscalar
 
 function inv_gamma(x::T, α::T, β::T) where T
 
@@ -115,28 +114,38 @@ function ELBO(out::AbstractArray{T}, alpha::AbstractArray{T}, alpha_parameter::A
 
 end
 
-mutable struct AutoEncoder
+abstract type AutoEncoder end
 
-    encoder
-    decoder
-    alpha
-    beta
-    decode
+macro autoencoder( T::Symbol )
+        
+    return eval(:( 
+        
+        mutable struct $T <: AutoEncoder
 
-    precision
-    device
+            encoder
+            decoder
+            alpha
+            beta
+            decode
+        
+            precision
+            device
+        
+        end;
 
-end
+        function $T(encoder, decoder, model_size; precision=Float32, device=gpu)
 
+            alpha   = Dense(model_size, model_size, softplus, init=Flux.identity_init)
+            beta    = Dense(model_size, 1,          softplus, init=Flux.glorot_normal(rng_from_array([1.0/model_size])))
+        
+            decode  = Dense(model_size, model_size, init=Flux.identity_init)
+        
+            return $T(encoder, decoder, alpha, beta, decode, precision, device)
+        
+        end;
 
-function AutoEncoder(encoder, decoder, model_size; precision=Float32, device=gpu)
-
-    alpha   = Dense(model_size, model_size, softplus, init=Flux.identity_init)
-    beta    = Dense(model_size, 1,          softplus, init=Flux.glorot_normal(rng_from_array([1.0/model_size])))
-
-    decode  = Dense(model_size, model_size, init=Flux.identity_init)
-
-    return AutoEncoder(encoder, decoder, alpha, beta, decode, precision, device)
+        Flux.@functor $T (encoder, decoder, alpha, beta)
+    ))
 
 end
 
@@ -164,11 +173,8 @@ function (model::AutoEncoder)(data::AbstractArray)
 end
 
 
-Flux.@functor AutoEncoder (encoder, decoder, alpha, beta)
-
-Flux.gpu(x::AutoEncoder) = AutoEncoder( x.encoder |> gpu, x.decoder |> gpu, x.alpha |> gpu, x.beta |> gpu, x.decode |> gpu, x.precision, gpu )
-Flux.cpu(x::AutoEncoder) = AutoEncoder( x.encoder |> cpu, x.decoder |> cpu, x.alpha |> cpu, x.beta |> cpu, x.decode |> cpu, x.precision, cpu )
-
+Flux.gpu(x::AutoEncoder) = (x.device=gpu; return fmap(gpu, x))
+Flux.cpu(x::AutoEncoder) = (x.device=cpu; return fmap(cpu, x))
 
 
 struct NoNaN <: Flux.Optimise.AbstractOptimiser

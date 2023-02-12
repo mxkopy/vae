@@ -1,11 +1,11 @@
-include("AutoEncoders.jl")
-include("DataIterators.jl")
+include("AutoEncoderOutputs.jl")
 
-using Printf, Interpolations, BSON, Zygote, ImageView, Gtk, CUDA, .AutoEncoders, .DataIterators
+
+using Printf, Interpolations, BSON, Zygote, ImageView, Gtk, CUDA
 using Flux: @epochs
 
 
-function save( filename, model, optimizer )
+function save( filename::String, model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser )
 
     device = deepcopy(model.device)
 
@@ -21,7 +21,7 @@ end
 
 
 
-function train( model, optimizer, loss, data, filename; save_freq=10, epochs=1 )
+function train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, loss::Function, data::DataIterator, filename::String; save_freq=10, epochs=1 )
 
     trainmode!(model)
 

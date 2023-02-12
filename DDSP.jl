@@ -1,7 +1,6 @@
-include("AutoEncoders.jl")
-include("DataIterators.jl")
+include("SomeMacros.jl")
 
-using Flux, NNlib, FFTW, SliceMap, CUDA, Plots, Printf, .AutoEncoders, .DataIterators
+using Flux, NNlib, FFTW, SliceMap, CUDA, Plots, Printf
 
 unit_normalize   = x -> x #x -> (x / 2f0) + 5f-1
 unit_denormalize = hardtanh #x -> (x * 2f0) - 1f0
@@ -9,133 +8,45 @@ unit_denormalize = hardtanh #x -> (x * 2f0) - 1f0
 activation       = tanh
 nonlinearity     = x -> x #relu
 
+mel = h -> 1125 * log( 1 + h/700 )
+hz  = m -> 700  * ( exp( m/1125 ) - 1 )
 
 
 
 
-function encoder(model_size)
-
-
-end
-
-function decoder(model_size)
-
-
-end
-
-
-
-
-function spectral_distance( out, data; ϵ=1f-8 )
-
-    F  = a -> abs.(a) .^ 2 |> sum |> sqrt
-    L1 = a -> abs.(a)      |> sum 
-
-    Y = fft(out,  [1])
-    X = fft(data, [1])
-
-    A = F(X .- Y) / max( F(X), ϵ )
-    B = log( L1( X .- Y ) )
-
-    return A + B
-
-end
-
-
-
-function loss( out, data, alpha, alpha_parameter )
-    
-    elbo    = ELBO(out, alpha, alpha_parameter)
-
-    s_loss  = spectral_distance(out, data)
-
-    r_loss  = Flux.Losses.mse(out, data)
-
-    Zygote.ignore() do 
-
-        @printf "\nr_loss %.5e s_loss %.5e -elbo %.5e" r_loss s_loss -elbo
-        flush(stdout)
-
-    end
-
-    return r_loss + s_loss #* 1f-2 - elbo * 1f-2
-
-end
-
-function loss(model)
+function ddsp_encoder(model_size::Int)
 
     return nothing
 
 end
 
+function ddsp_decoder(model_size::Int)
 
-function visualizer(model)
+    return nothing
 
-    # p1 = plot(1:1, [0])
-    # p2 = plot(1:1, [0])
-
-    return function(out, data)
-
-        # x = mean(out,  dims=3)
-        # y = mean(data, dims=3)
-
-        # x = reshape( x, length(x) )
-        # y = reshape( y, length(y) )
-
-        # for (o, d) in zip(out, data)
-
-        #     push!(p1, o)
-        #     push!(p2, d)
-
-        # end
-
-        return nothing
-
-    end
 
 end
 
-
-function AudioVAE(model_size; device=gpu)
-
-    enc = encoder(model_size)
-    dec = decoder(model_size)
-
-    return AutoEncoder( enc, dec, model_size, device=device )
-
-end
-
-
-
-include("SomeMacros.jl")
-
-using FFTW, Flux
-
-
-
-mel = h -> 1125 * log( 1 + h/700 )
-hz  = m -> 700  * ( exp( m/1125 ) - 1 )
-
-function rectangular_window(L, x)
+function rectangular_window(L::Number, x::Number)
 
     return 1
 
 end
 
 
-function hann_window(L, x)
+function hann_window(L::Number, x::Number)
 
     sin(pi * x / L)^2
 
 end
 
-function smoothing_window(L, x)
+function smoothing_window(L::Number, x::Number)
 
     return 3*L / (2*L^2-1) * (1 - (2*(x+1)/L-1)^2 )
 
 end
 
-function triangular_window(L, x)
+function triangular_window(L::Number, x::Number)
 
     return 1 - abs(2*x/L - 1)
 
@@ -336,3 +247,7 @@ function MelResNet(sample_rate=44100)
     )
 
 end
+
+@autoencoder DDSP
+
+DDSP(model_size; device=gpu) = DDSP( ddsp_encoder(model_size), ddsp_decoder(model_size), model_size, device=device )
