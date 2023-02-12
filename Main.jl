@@ -124,11 +124,9 @@ model = model |> device
 
 if args["train"]
 
-    loss = model |> losses[typeof(model)]
-
     data = (data_iterators[typeof(model)])()
 
-    train_autoencoder( model, optimizer, loss, data, filename, save_freq=args["save-freq"], epochs=args["epochs"] )
+    train_autoencoder( model, optimizer, data, filename, save_freq=args["save-freq"], epochs=args["epochs"] )
 
 end
 
