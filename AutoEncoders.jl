@@ -140,7 +140,7 @@ macro autoencoder( T::Symbol )
         
             decode  = Dense(model_size, model_size, init=Flux.identity_init)
         
-            return $T(encoder, decoder, alpha, beta, decode, precision, device)
+            return $T(encoder, decoder, alpha, beta, decode, precision, device) |> device
         
         end;
 
