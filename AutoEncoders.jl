@@ -178,9 +178,7 @@ Flux.gpu(x::AutoEncoder) = (x.device=gpu; return fmap(gpu, x))
 Flux.cpu(x::AutoEncoder) = (x.device=cpu; return fmap(cpu, x))
 
 
-struct NoNaN <: Flux.Optimise.AbstractOptimiser
-
-end
+struct NoNaN <: Flux.Optimise.AbstractOptimiser end
 
 
 function Flux.Optimise.apply!(o::NoNaN, x, Δ::AbstractArray{T}) where T
