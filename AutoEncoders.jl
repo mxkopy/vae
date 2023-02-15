@@ -139,7 +139,7 @@ macro autoencoder( T::Symbol )
 
         function $T(encoder, decoder, model_size; precision=Float32, device=gpu)
 
-            alpha  = Chain( Dense(model_size, model_size, softplus, init=Flux.identity_init) )
+            alpha  = Dense(model_size, model_size, softplus, init=Flux.identity_init)
             beta   = Dense(model_size, 1,          softplus, init=Flux.glorot_normal(rng_from_array([1.0/model_size])))
         
             decode = Dense(model_size, model_size, init=Flux.identity_init)
