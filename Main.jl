@@ -27,6 +27,8 @@ function arguments()
             arg_type = String
             default  = "image"
 
+        # loads the model at 
+        # ./data/models/$(load-arg).bson
         "--load"
             arg_type = String
 
