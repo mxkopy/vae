@@ -25,7 +25,7 @@ end
 
 function alpha_mme(α_true::AbstractVector{T}) where T
 
-    function update(μ::T, x::T, n)
+    function update(μ, x, n)
 
         n̂ = ceil(exp(n))
 

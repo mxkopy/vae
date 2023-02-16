@@ -14,7 +14,7 @@ function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha
 
     return function (decoder::AbstractArray, latent::AbstractArray, alpha::AbstractArray)
         
-        mme_alpha   = @ignore mme(latent) .|> model.precision |> model.device
+        mme_alpha   = @ignore mme(latent)
 
         true_alpha  = @ignore (n += 1) > burn_in ? mme_alpha : true_alpha
 
