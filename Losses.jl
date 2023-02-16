@@ -19,6 +19,28 @@ function interpolate_data(out::AbstractArray, data::AbstractArray)
 
 end
 
+
+# function data_interpolator( model::ResNetVAE )
+
+#     return function (data::AbstractArray)
+
+#         outsize = Flux.outputsize(model, size(data))
+
+        
+
+#     end
+
+# end
+
+
+function loss( model::AutoEncoder, data::AbstractArray, loss_fn::Function )
+
+    
+
+end
+
+
+
 # this creates a loss function that's used in training
 # includes stuff like visualizers & scheduling
 # i don't imagine super abstract usage so for now many things are hardcoded
