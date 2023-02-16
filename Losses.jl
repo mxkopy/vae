@@ -6,11 +6,9 @@ include("Visualizers.jl")
 
 
 
-function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha.bias)), burn_in=10000 )
+function elbo_loss( model::AutoEncoder; true_alpha=fill(model.precision(0.98), length(model.alpha.bias)) |> model.device, burn_in=10000 )
 
     mme, n  = alpha_mme(true_alpha), 0
-
-    true_alpha = true_alpha .|> model.precision |> model.device
 
     return function (decoder::AbstractArray, latent::AbstractArray, alpha::AbstractArray)
         
