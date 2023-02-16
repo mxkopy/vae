@@ -40,7 +40,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     μ1, μ2 = α_true .^ 1, α_true .^ 2
 
-    function S(p::AbstractVector, n)
+    function S(p::AbstractVector{T}, n)
 
         μ1, μ2 = update.(μ1, p, n), update.(μ2, p .^ 2, n)
 
@@ -50,7 +50,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     P̄ = α_true .* 0
 
-    function mme(P::AbstractVector, n)
+    function mme(P::AbstractVector{T}, n)
 
         P̄ = update.(P̄, P, n)
 
@@ -60,7 +60,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     N::T = 0.0
 
-    return function( P::AbstractArray )
+    return function( P::AbstractArray{T} )
 
         P = reshape( P, first(size(P)), : )
 
