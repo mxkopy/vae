@@ -52,38 +52,6 @@ function audio_reader(dir, sample_size)
 
 end
 
-function video_reader(stream)
-
-    lastindex = 0
-
-    reader = function(index)
-
-        if index < lastindex
-
-            seekstart(stream)
-
-            skipframes(stream, index)
-        
-        else
-
-            skipframes(stream, index - lastindex - 1)
-
-        end
-
-        lastindex = index
-
-        return read(stream)
-
-    end
-
-    close_reader = () -> close(stream)
-
-    return reader, close_reader
-
-end
-
-
-
 function AudioFileReader(dir; sample_size::Int=2^16, shuffle::Bool=false)
 
     stream = loadstreaming(dir)
@@ -95,16 +63,6 @@ function AudioFileReader(dir; sample_size::Int=2^16, shuffle::Bool=false)
     reader, close_reader = audio_reader(dir, sample_size)
 
     return FileReader(reader, close_reader, info.frames ÷ sample_size, shuffle=shuffle)
-
-end
-
-function VideoFileReader(dir; shuffle::Bool=false)
-
-    stream = VideoIO.openvideo(dir)
-
-    reader, close_reader = video_reader(stream)
-
-    return FileReader(reader, close_reader, VideoIO.counttotalframes(stream), shuffle=shuffle)
 
 end
 
@@ -120,8 +78,6 @@ function ImageFileReader(dir; shuffle::Bool=false)
 
 end
 
-
-
 struct DataIterator
 
     files
@@ -134,12 +90,6 @@ Base.length(itr::DataIterator)  = sum(file -> length(file), itr.files, init=0)
 Base.isempty(itr::DataIterator) = length(itr) == 0
 
 DataIterator(reader, directory::String, shuffle_dir::Bool) = DataIterator( map(reader, readdir(directory, join=true, sort=false) ), shuffle_dir )
-
-# function serialize(itr::DataIterator)
-
-# 
-
-
 
 function Base.iterate(itr::DataIterator, files=itr.files)
 
@@ -169,14 +119,6 @@ end
 function AudioData(; directory::String="data/audio/", sample_size::Int=2^16, shuffle::Bool=false, shuffle_dir::Bool=false)
 
     reader = dir -> AudioFileReader(dir, sample_size=sample_size, shuffle=shuffle) 
-
-    return DataIterator(reader, directory, shuffle_dir)
-
-end
-
-function VideoData(; directory::String="data/video/", shuffle::Bool=false, shuffle_dir::Bool=false)
-
-    reader = dir -> VideoFileReader(dir, shuffle=shuffle)
 
     return DataIterator(reader, directory, shuffle_dir)
 
@@ -233,7 +175,6 @@ end
 Base.length( itr::BatchIterator )  = Base.length(itr.iterator) / itr.batches |> ceil |> Int
 Base.isempty( itr::BatchIterator ) = Base.isempty(itr.iterator)
 
-
 function Base.iterate(itr::BatchIterator, iterator=itr.iterator)
 
     data = Iterators.take(iterator, itr.batches)
@@ -244,8 +185,6 @@ function Base.iterate(itr::BatchIterator, iterator=itr.iterator)
 
 end
 
-
-
 function AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false)
 
     iterator = AudioData(directory=directory, sample_size=sample_size, shuffle=shuffle, shuffle_dir=shuffle_dir)
@@ -254,16 +193,6 @@ function AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, sh
 
 end
 
-
-function VideoIterator(;directory="data/video/", batches=1, shuffle=false, shuffle_dir=false)
-
-    iterator = VideoData(directory=directory, shuffle=shuffle, shuffle_dir=shuffle_dir)
-
-    return BatchIterator(batches, iterator, preprocess_image)
-
-end
-
-
 function ImageIterator(;directory="data/image/", batches=1, shuffle=false)
 
     iterator = ImageData(directory=directory, shuffle=shuffle)
@@ -271,3 +200,59 @@ function ImageIterator(;directory="data/image/", batches=1, shuffle=false)
     return BatchIterator(batches, iterator, preprocess_image)
 
 end
+
+# function video_reader(stream)
+
+#     lastindex = 0
+
+#     reader = function(index)
+
+#         if index < lastindex
+
+#             seekstart(stream)
+
+#             skipframes(stream, index)
+        
+#         else
+
+#             skipframes(stream, index - lastindex - 1)
+
+#         end
+
+#         lastindex = index
+
+#         return read(stream)
+
+#     end
+
+#     close_reader = () -> close(stream)
+
+#     return reader, close_reader
+
+# end
+
+# function VideoFileReader(dir; shuffle::Bool=false)
+
+#     stream = VideoIO.openvideo(dir)
+
+#     reader, close_reader = video_reader(stream)
+
+#     return FileReader(reader, close_reader, VideoIO.counttotalframes(stream), shuffle=shuffle)
+
+# end
+
+# function VideoData(; directory::String="data/video/", shuffle::Bool=false, shuffle_dir::Bool=false)
+
+#     reader = dir -> VideoFileReader(dir, shuffle=shuffle)
+
+#     return DataIterator(reader, directory, shuffle_dir)
+
+# end
+
+# function VideoIterator(;directory="data/video/", batches=1, shuffle=false, shuffle_dir=false)
+
+#     iterator = VideoData(directory=directory, shuffle=shuffle, shuffle_dir=shuffle_dir)
+
+#     return BatchIterator(batches, iterator, preprocess_image)
+
+# end
