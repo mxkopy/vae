@@ -1,4 +1,4 @@
-include("AutoEncoderOutputs.jl")
+include("ResNetREPLVisualizers.jl")
 
 
 using Printf, Interpolations, BSON, Zygote, ImageView, Gtk, CUDA
