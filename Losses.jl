@@ -20,68 +20,61 @@ function interpolate_data(out::AbstractArray, data::AbstractArray)
 end
 
 
-# function data_interpolator( model::ResNetVAE )
+function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha.bias)) .|> model.precision |> model.device, burn_in=10000 )
 
-#     return function (data::AbstractArray)
+    mme, n  = alpha_mme(true_alpha), 0
 
-#         outsize = Flux.outputsize(model, size(data))
-
+    return function (decoder::AbstractArray, latent::AbstractArray, alpha::AbstractArray)
         
+        mme_alpha   = @ignore mme(latent)
 
-#     end
+        true_alpha  = @ignore (n += 1) > burn_in ? alpha_mme : true_alpha
 
-# end
+        return ELBO(decoder, alpha, true_alpha)
 
-
-function loss( model::AutoEncoder, data::AbstractArray, loss_fn::Function )
-
-    
+    end
 
 end
 
 
+function visualize_loss( model::AutoEncoder, print_string::String )
 
-# this creates a loss function that's used in training
-# includes stuff like visualizers & scheduling
-# i don't imagine super abstract usage so for now many things are hardcoded
+    visualize = visualizer( model )
 
-# schedule_period is a pair giving the number of iterations for the annealing & fixed loss, respectively
-# from https://arxiv.org/pdf/1903.10145.pdf
+    return function ( data::Tuple, losses::Tuple )
 
-function loss( model::ResNetVAE; α_true=fill(0.98, length(model.alpha.bias)) .|> model.precision |> model.device, burn_in=10000, schedule_period=400=>250 )
+        Zygote.ignore() do 
 
-    visualize = visualizer(model)
+            visualize( data... )
 
-    schedule  = vcat(range(0.0, 1f-3, first(schedule_period)), fill(1.0, last(schedule_period))) |> Iterators.cycle |> Iterators.Stateful
+            @eval @printf $print_string $(losses...)
 
-    mme, n    = alpha_mme(α_true), 0
-
-    return @noinline function(data::AbstractArray)
-
-        encoder, decoder, α, β, latent = model(data)
-
-        data    = @ignore interpolate_data(decoder, data) .|> model.precision |> model.device
-        
-        w       = @ignore first(schedule)
-
-        α_t     = @ignore mme(latent)
-
-        α_true  = @ignore (n += 1) > burn_in ? α_t : α_true
-
-        elbo    = ELBO(decoder, α, α_true)
-
-        r_loss  = Flux.Losses.mse(decoder, data)
-
-        Zygote.ignore() do  
-    
-            visualize(data, decoder)
-    
-            @printf "\nr_loss %.5e -elbo %.5e %i" r_loss -elbo n
             flush(stdout)
-    
+
         end
 
-        return r_loss - elbo * 1f-2
+    end
+
+end
+
+
+function create_loss_function( model::AutoEncoder )
+
+    elbo = elbo_loss( model )
+
+    visualize = visualize_loss( model, "\nr_loss %.5e -elbo %.5e" )
+
+    return function ( data::AbstractArray )
+
+        e, d, α, β, l = model(data)
+
+        E = elbo( e, l, α )
+
+        R = Flux.Losses.mse( d, @ignore interpolate_data(d, data) )
+
+        visualize( (d, data), (R, -E) )
+
+        return R - E * 1f-2
 
     end
 
@@ -131,10 +124,10 @@ end
 
 # end
 
-function loss(model::DDSP)
+# function loss(model::DDSP)
 
-    return nothing
+#     return nothing
 
-end
+# end
 
 
