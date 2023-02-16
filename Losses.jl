@@ -1,5 +1,7 @@
 include("Visualizers.jl")
 
+using Base.Threads
+
 ###############
 #   Generic   #
 ###############
@@ -53,13 +55,14 @@ end
 
 function create_loss_function( model::AutoEncoder )
 
-    elbo           = elbo_loss( model )
+    elbo, reconstruction, visualizer, printer = fetch.((
 
-    reconstruction = reconstruction_loss( model ) 
+        (@spawn elbo_loss( model )),
+        (@spawn reconstruction_loss( model )),
+        (@spawn visualize_loss( model )),
+        (@spawn print_loss("\nr_loss %.5e -elbo %.5e"))
 
-    visualizer     = visualize_loss( model )
-
-    printer        = print_loss("\nr_loss %.5e -elbo %.5e")
+    ))
 
     return function ( x::AbstractArray )
 

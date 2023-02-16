@@ -1,7 +1,7 @@
 include("ResNetREPLVisualizers.jl")
 
 
-using Printf, Interpolations, BSON, Zygote, ImageView, Gtk, CUDA
+using Printf, Interpolations, BSON, ImageView, Gtk, CUDA
 using Flux: @epochs
 
 

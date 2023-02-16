@@ -1,4 +1,4 @@
-using Flux, Serialization, WAV, Zygote, Distributions, CUDA, SpecialFunctions, Printf
+using Flux, Serialization, WAV, Distributions, CUDA, SpecialFunctions, Printf
 
 using SpecialFunctions: gamma as Γ, loggamma as logΓ, digamma as ψ
 using Zygote: @ignore
@@ -27,7 +27,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     function update(μ, x, n)
 
-        n̂ = exp(n)
+        n̂ = 2^n 
 
         μ = μ * (n̂ - 1)
         μ = (μ + x) / n̂
@@ -59,7 +59,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
     end
 
 
-    N::T = 0.0
+    N = 0
 
     return function( P::AbstractArray )
 
@@ -67,13 +67,13 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
         A = map( 1:last(size(P)) ) do i
 
-            n = N + log( 1 + i / exp(N) )
+            n = N + log2( 1 + i / 2^N )
 
             return mme( P[:, i], n )
 
         end
 
-        N += log( 1 + last(size(P)) / exp(N) )
+        N += log2( 1 + last(size(P)) / 2^N )
 
         return last(A), N
 

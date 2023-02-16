@@ -98,9 +98,9 @@ function visualizer(model::ResNetVAE, grid_size=(256, 256))
 
     L, R = single_visualizer(grid_size), single_visualizer(grid_size)
 
-    return function(decoder, data)
+    return function(decoder::AbstractArray, data::AbstractArray)
 
-        decoder[:, :, :, 1] |> cpu |> from_color |> L, data[:, :, :, 1] |> cpu |> from_color |> R
+        decoder[:, :, :, 1] |> from_color |> L, data[:, :, :, 1] |> from_color |> R
 
     end
 
