@@ -20,6 +20,9 @@ function arguments()
         "--no-gpu"
             action = :store_true
 
+        "--no-vis"
+            action = :store_true
+
         "--type"
             arg_type = String
             default  = "image"
@@ -116,6 +119,14 @@ else
     loaded   = BSON.load(filename)
 
     model, optimizer = loaded["model"], loaded["optimizer"]
+
+end
+
+
+# utterly disgusting
+if args["no-vis"]
+
+    @eval visualize_loss(_::$(typeof(model))) = (args...) -> nothing
 
 end
 
