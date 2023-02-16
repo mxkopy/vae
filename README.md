@@ -68,41 +68,19 @@ T(encoder, decoder, model_size; precision=Float32, device=gpu)
 
 that sets the alpha, beta and decode fields to sensible Dense layers. 
 
-# Loss Function
-In order to train your model, you should specify its reconstruction_loss method:
+# Loss Functions
+When possible, the methods provided in this library are generic to AutoEncoder (reconstruction_loss is rather domain-specific and doesn't make much sense to generalize). You can define custom behavior by specifying them to your model's type. Here is the list of signatures you can use should you want to do so:
 
 ```
-function reconstruction_loss( model::T )
-
-  state = ...
-
-  return function( y, x )
-  
-    update_state( state, x, y )
-
-    Flux.Losses.Whichever( y, x )
-  
-  end
-
-end
+create_loss_function(model::T)
+elbo_loss(model::T)
+visualize_loss(model::T)
+print_loss(format::String)
 ```
 
-You can do the same to provide visualizations, which are not generic:
+And of course, you can add your own. 
 
-```
-function visualizer( model::T )
-
-  return function(data::Tuple, losses::Tuple)
-
-    imshow(data...)
-    print(losses...)
-
-  end
-
-end
-```
-
-The loss function used in training is composed of these methods within the generic create_loss_function method, which looks something like this:
+The generic create_loss_function composes the rest of these methods in a way similar to this:
 
 ```
 function create_loss_function( model::AutoEncoder )
@@ -114,6 +92,7 @@ function create_loss_function( model::AutoEncoder )
   return function( x::AbstractArray )
 
     y = model(x)
+
     e = E(y)
     r = R(y, x)
 
@@ -124,7 +103,7 @@ function create_loss_function( model::AutoEncoder )
 end
 ```
 
-If you wish to specify your own create_loss_function, you can use none or all of the other methods, as well as any other functions you define. Just remember to initialize state in the outer scope.  
+In general, these methods can persist important state in between iterations, such as a method-of-moments estimator or GUI. This sort of state should be initialized in the outer scope, and can be updated within the returned function.
 
 # Data
 After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' with .wav audio. Julia is agnostic to the filesystem used, so you can sshfs or ln -s a COCO training dataset or similar (I use train2017). 
@@ -161,7 +140,7 @@ ResNetREPLVisualizers.jl provides a set of functions that make it easier to visu
 # Potential Issues
 The data folder is hardcoded for now. If it's not there, or its permissions are restrictive, then Julia may complain about not being able to find/access your data.
 
-If you don't have an X server or similar, ImageView will unfortunately throw. However, if you neuter the visualizers in Visualizations.jl, it will work.
+Visualizers are GTK based (i.e. use ssh -X or the --no-vis flag, or ImageView may throw)
 
 Mixed memory and mixed precision aren't supported.
 
