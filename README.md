@@ -69,23 +69,62 @@ T(encoder, decoder, model_size; precision=Float32, device=gpu)
 that sets the alpha, beta and decode fields to sensible Dense layers. 
 
 # Loss Function
-In order to train your model, you should define a loss function that looks something like this:
+In order to train your model, you should specify its reconstruction_loss method:
 
 ```
-function loss( model )
+function reconstruction_loss( model::T )
 
-  return function lf( data )
+  state = ...
+
+  return function( y, x )
   
-    Flux.Losses.Whichever( model(data), data )
+    update_state( state, x, y )
+
+    Flux.Losses.Whichever( y, x )
   
   end
 
 end
 ```
 
-Sometimes, it's helpful to persist state between iterations (e.g. schedulers, visualizers, etc.), which is why we have this nested abomination. I plan to change this.
+You can do the same to provide visualizations, which are not generic:
 
-Note that the ELBO estimate (which is KL divergence plus some other stuff) isn't included in this template, so you'll have to add that as well if you want regularized latent spaces. I also plan to change this.
+```
+function visualizer( model::T )
+
+  return function(data::Tuple, losses::Tuple)
+
+    imshow(data...)
+    print(losses...)
+
+  end
+
+end
+```
+
+The loss function used in training is composed of these methods within the generic create_loss_function method, which looks something like this:
+
+```
+function create_loss_function( model::AutoEncoder )
+
+  visualize = visualizer(model)
+  E         = elbo_loss(model)
+  R         = reconstruction_loss(model)
+
+  return function( x::AbstractArray )
+
+    y = model(x)
+    e = E(y)
+    r = R(y, x)
+
+    visualize( (y,x), (e,r) )
+
+  end
+
+end
+```
+
+If you wish to specify your own create_loss_function, you can use none or all of the other methods, as well as any other functions you define. Just remember to initialize state in the outer scope.  
 
 # Data
 After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' with .wav audio. Julia is agnostic to the filesystem used, so you can sshfs or ln -s a COCO training dataset or similar (I use train2017). 
@@ -96,8 +135,6 @@ The DataIterator library stands fairly well alone, and is plug-and-play provided
 ImageIterator(;directory="data/image/", batches=1, shuffle=false) -> Array{T, 4}
 AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false) -> Array{T, 4}
 ```
-
-I do not recommend using VideoIterator, as video is weird.
 
 # Optimiser
 The final ingredient required for a training loop is an optimiser. The default
@@ -119,7 +156,7 @@ Which is more or less a wrapper around Flux's training loop.
 However; if you've gotten this far, you may want to roll your own, which is not difficult at all given a model, loss function, data iterator, and optimiser. See https://fluxml.ai/Flux.jl/stable/training/training/#Training-Loops for an example.
 
 # Playing Around With It
-AutoEncoderOutputs.jl provides a set of functions that make it easier to visualize manipulations in latent space. A sample script is commented out at the bottom. For now, it's expressely for the ResNetVAE.
+ResNetREPLVisualizers.jl provides a set of functions that make it easier to visualize manipulations in latent space for the ResNetVAE. A sample script is commented out at the bottom. 
 
 # Potential Issues
 The data folder is hardcoded for now. If it's not there, or its permissions are restrictive, then Julia may complain about not being able to find/access your data.
@@ -131,8 +168,6 @@ Mixed memory and mixed precision aren't supported.
 This isn't a package, so the source dependency tree is important to note if you want to add more files.
 
 DDSP isn't finished.
-
-DataIterators are not yet serializable due to how reading video seems to work - it may get removed because of this.
 
 # Etc
 This was a learning project more than anything for me, so I really went all over the place. If manipulating multidimensional arrays is something you do often, I recommend checking out SomeMacros.jl, which provides a very powerful CUDA-compatible broadcast macro. I found it to be useful in implementing DDSP.
