@@ -6,15 +6,15 @@ include("Visualizers.jl")
 
 
 
-function elbo_loss( model::AutoEncoder; true_alpha=fill(model.precision(0.98), length(model.alpha.bias)) |> model.device, burn_in=10000 )
+function elbo_loss( model::AutoEncoder; true_alpha=fill(model.precision(0.98), length(model.alpha.bias)) |> model.device, burn_in=1e5 )
 
-    mme, n  = alpha_mme(true_alpha), 0
+    mme = alpha_mme(true_alpha)
 
     return function (decoder::AbstractArray, latent::AbstractArray, alpha::AbstractArray)
         
-        mme_alpha   = @ignore mme(latent)
+        mme_alpha, N = @ignore mme(latent)
 
-        true_alpha  = @ignore (n += 1) > burn_in ? mme_alpha : true_alpha
+        true_alpha   = @ignore N > log(burn_in) ? mme_alpha : true_alpha
 
         return ELBO(decoder, alpha, true_alpha)
 

@@ -27,7 +27,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     function update(μ, x, n)
 
-        n̂ = ceil(exp(n))
+        n̂ = exp(n)
 
         μ = μ * (n̂ - 1)
         μ = (μ + x) / n̂
@@ -74,7 +74,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
         N += log( 1 + last(size(P)) / exp(N) )
 
-        return last(A)
+        return last(A), N
 
     end
 
