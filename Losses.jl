@@ -4,6 +4,8 @@ include("Visualizers.jl")
 #   Generic   #
 ###############
 
+
+
 function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha.bias)), burn_in=10000 )
 
     mme, n  = alpha_mme(true_alpha), 0
@@ -23,6 +25,7 @@ function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha
 end
 
 
+
 function visualize_loss( model::AutoEncoder )
 
     visualize = visualizer( model )
@@ -37,11 +40,11 @@ end
 
 
 
-function print_loss( print_string )
+function print_loss( format )
 
     return function( losses... )
 
-        @ignore @eval @printf $print_string $(losses...)
+        @ignore @eval @printf $format $(losses...)
 
         @ignore flush(stdout)
 
