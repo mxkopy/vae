@@ -130,7 +130,7 @@ function spectral_distance( out::AbstractArray, data::AbstractArray; ϵ=1f-8 )
 
 end
 
-function reconstruction_loss( model::ResNetVAE )
+function reconstruction_loss( model::DDSP )
 
     return function ( y::AbstractArray, x::AbstractArray )
 
