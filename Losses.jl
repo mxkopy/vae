@@ -1,12 +1,5 @@
 include("Visualizers.jl")
 
-
-#################
-#   ResNetVAE   #
-#################
-
-
-
 function interpolate_data(out::AbstractArray, data::AbstractArray)
 
     mode = map( o -> o == 1 ? NoInterp() : BSpline(Linear()), size(out) )
@@ -60,9 +53,11 @@ end
 
 function create_loss_function( model::AutoEncoder )
 
-    elbo = elbo_loss( model )
+    elbo           = elbo_loss( model )
 
-    visualize = visualize_loss( model, "\nr_loss %.5e -elbo %.5e" )
+    reconstruction = reconstruction_loss( model ) 
+
+    visualize      = visualize_loss( model, "\nr_loss %.5e -elbo %.5e" )
 
     return function ( data::AbstractArray )
 
@@ -70,7 +65,7 @@ function create_loss_function( model::AutoEncoder )
 
         E = elbo( e, l, α )
 
-        R = Flux.Losses.mse( d, @ignore interpolate_data(d, data) )
+        R = reconstruction(d, data)
 
         visualize( (d, data), (R, -E) )
 
@@ -80,6 +75,22 @@ function create_loss_function( model::AutoEncoder )
 
 end
 
+
+#################
+#   ResNetVAE   #
+#################
+
+
+
+function reconstruction_loss( model::ResNetVAE )
+
+    return function ( decoder_output::AbstractArray, data::AbstractArray )
+
+        return Flux.Losses.mse( decoder_output, @ignore interpolate_data(decoder_output, data) )
+
+    end
+
+end
 
 
 ############
