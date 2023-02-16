@@ -6,7 +6,7 @@ include("Visualizers.jl")
 
 
 
-function elbo_loss( model::AutoEncoder; true_alpha=fill(model.precision(0.98), length(model.alpha.bias)) |> model.device, burn_in=1e5 )
+function elbo_loss( model::AutoEncoder; true_alpha=fill(model.precision(0.98), length(model.alpha.bias)) |> model.device, burn_in=1e10 )
 
     mme = alpha_mme(true_alpha)
 
@@ -30,7 +30,7 @@ function visualize_loss( model::AutoEncoder )
 
     return function ( data... )
 
-        @ignore visualize( data... )
+        visualize( data... )
 
     end
 
@@ -42,9 +42,9 @@ function print_loss( format )
 
     return function( losses... )
 
-        @ignore @eval @printf $format $(losses...)
+        @eval @printf $format $(losses...)
 
-        @ignore flush(stdout)
+        flush(stdout)
 
     end
 
@@ -61,17 +61,17 @@ function create_loss_function( model::AutoEncoder )
 
     printer        = print_loss("\nr_loss %.5e -elbo %.5e")
 
-    return function ( data::AbstractArray )
+    return function ( x::AbstractArray )
 
-        e, d, α, β, l = model(data)
+        e, y, α, β, l = model(x)
 
         E = elbo( e, l, α )
 
-        R = reconstruction(d, data)
+        R = reconstruction(y, x)
 
-        visualizer(d, data)
+        @ignore @async visualizer(y, x)
 
-        printer(R, -E)
+        @ignore @async printer(R, -E)
 
         return R - E * 1f-2
 

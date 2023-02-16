@@ -37,7 +37,6 @@ function alpha_mme(α_true::AbstractVector{T}) where T
     end
 
 
-
     μ1, μ2 = α_true .^ 1, α_true .^ 2
 
     function S(p::AbstractVector, n)
@@ -48,6 +47,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     end
 
+
     P̄ = α_true .* 0
 
     function mme(P::AbstractVector, n)
@@ -57,6 +57,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
         return S(P, n) .* P̄
 
     end
+
 
     N::T = 0.0
 
