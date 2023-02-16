@@ -84,9 +84,9 @@ end
 
 function reconstruction_loss( model::ResNetVAE )
 
-    return function ( decoder_output::AbstractArray, data::AbstractArray )
+    return function ( y::AbstractArray, x::AbstractArray )
 
-        return Flux.Losses.mse( decoder_output, @ignore interpolate_data(decoder_output, data) )
+        return Flux.Losses.mse( y, @ignore interpolate_data(y, x) .|> model.precision |> model.device )
 
     end
 
