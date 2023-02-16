@@ -1,27 +1,20 @@
 include("Visualizers.jl")
 
-function interpolate_data(out::AbstractArray, data::AbstractArray)
+###############
+#   Generic   #
+###############
 
-    mode = map( o -> o == 1 ? NoInterp() : BSpline(Linear()), size(out) )
-
-    axes = map( ((d, o),) -> range(1, d, o), zip( size(data), size(out) ) )
-
-    itp  = interpolate(data, mode)
-
-    return itp( axes... )
-
-end
-
-
-function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha.bias)) .|> model.precision |> model.device, burn_in=10000 )
+function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha.bias)), burn_in=10000 )
 
     mme, n  = alpha_mme(true_alpha), 0
+
+    true_alpha = true_alpha .|> model.precision |> model.device
 
     return function (decoder::AbstractArray, latent::AbstractArray, alpha::AbstractArray)
         
         mme_alpha   = @ignore mme(latent)
 
-        true_alpha  = @ignore (n += 1) > burn_in ? alpha_mme : true_alpha
+        true_alpha  = @ignore (n += 1) > burn_in ? mme_alpha : true_alpha
 
         return ELBO(decoder, alpha, true_alpha)
 
@@ -30,21 +23,27 @@ function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.alpha
 end
 
 
-function visualize_loss( model::AutoEncoder, print_string::String )
+function visualize_loss( model::AutoEncoder )
 
     visualize = visualizer( model )
 
-    return function ( data::Tuple, losses::Tuple )
+    return function ( data... )
 
-        Zygote.ignore() do 
+        @ignore visualize( data... )
 
-            visualize( data... )
+    end
 
-            @eval @printf $print_string $(losses...)
+end
 
-            flush(stdout)
 
-        end
+
+function print_loss( print_string )
+
+    return function( losses... )
+
+        @ignore @eval @printf $print_string $(losses...)
+
+        @ignore flush(stdout)
 
     end
 
@@ -57,7 +56,9 @@ function create_loss_function( model::AutoEncoder )
 
     reconstruction = reconstruction_loss( model ) 
 
-    visualize      = visualize_loss( model, "\nr_loss %.5e -elbo %.5e" )
+    visualizer     = visualize_loss( model )
+
+    printer        = print_loss("\nr_loss %.5e -elbo %.5e")
 
     return function ( data::AbstractArray )
 
@@ -67,7 +68,9 @@ function create_loss_function( model::AutoEncoder )
 
         R = reconstruction(d, data)
 
-        visualize( (d, data), (R, -E) )
+        visualizer(d, data)
+
+        printer(R, -E)
 
         return R - E * 1f-2
 
@@ -80,7 +83,17 @@ end
 #   ResNetVAE   #
 #################
 
+function interpolate_data(out::AbstractArray, data::AbstractArray)
 
+    mode = map( o -> o == 1 ? NoInterp() : BSpline(Linear()), size(out) )
+
+    axes = map( ((d, o),) -> range(1, d, o), zip( size(data), size(out) ) )
+
+    itp  = interpolate(data, mode)
+
+    return itp( axes... )
+
+end
 
 function reconstruction_loss( model::ResNetVAE )
 
@@ -114,31 +127,12 @@ function spectral_distance( out::AbstractArray, data::AbstractArray; ϵ=1f-8 )
 
 end
 
+function reconstruction_loss( model::ResNetVAE )
 
+    return function ( y::AbstractArray, x::AbstractArray )
 
-# function loss( out, data, alpha, alpha_parameter )
-    
-#     elbo    = ELBO(out, alpha, alpha_parameter)
+        return Flux.Losses.mse( y, x ) + spectral_distance(y, x)
 
-#     s_loss  = spectral_distance(out, data)
+    end
 
-#     r_loss  = Flux.Losses.mse(out, data)
-
-#     Zygote.ignore() do 
-
-#         @printf "\nr_loss %.5e s_loss %.5e -elbo %.5e" r_loss s_loss -elbo
-#         flush(stdout)
-
-#     end
-
-#     return r_loss + s_loss #* 1f-2 - elbo * 1f-2
-
-# end
-
-# function loss(model::DDSP)
-
-#     return nothing
-
-# end
-
-
+end
