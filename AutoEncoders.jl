@@ -186,7 +186,7 @@ query_device(model::AutoEncoder)     = model.interpret.weight isa CuArray ? :gpu
 query_precision(model::AutoEncoder)  = model.interpret.weight |> eltype
 convert(T::Type, model::AutoEncoder) = fmap( x -> x isa AbstractArray ? T.(x) : x, model )
 
-convert(model::AutoEncoder, x::AbstractArray)              = x .|> query_precision(model) |> eval(query_device(model))
+convert(model::AutoEncoder, x::AbstractArray)              = x .|> query_precision(model) |> ( query_device(model) == :gpu ? gpu : cpu )
 convert(model::AutoEncoder; precision=Float32, device=gpu) = convert(precision, model) |> device
 
 
