@@ -7,15 +7,11 @@ using Flux: @epochs
 
 function save( filename::String, model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser )
 
-    device = deepcopy(model.device)
-
     BSON.bson(filename,  Dict("model" => model |> cpu, "optimizer" => optimizer |> cpu))
     GC.gc(true)
     CUDA.functional() && CUDA.reclaim()
 
     println("model saved!")
-
-    model, optimizer = model |> device, optimizer |> device
 
 end
 

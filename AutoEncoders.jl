@@ -1,9 +1,10 @@
-using Flux, Serialization, WAV, Distributions, CUDA, SpecialFunctions, Printf
+using Flux, CUDA, Serialization, Distributions, SpecialFunctions, Printf
 
 using SpecialFunctions: gamma as Γ, loggamma as logΓ, digamma as ψ
 using Zygote: @ignore
 
 import Flux.outputsize
+import Flux.trainmode!
 
 function inv_gamma(x::T, α::T, β::T) where T
 
@@ -123,29 +124,26 @@ macro autoencoder( T::Symbol )
         
     return eval(:( 
         
-        mutable struct $T <: AutoEncoder
+        struct $T <: AutoEncoder
 
             encoder
             decoder
             alpha
             beta
-            decode
-        
-            precision
-            device
-        
+            interpret
+
         end;
         
-        Flux.@functor $T (encoder, decoder, alpha, beta, decode);
+        Flux.@functor $T (encoder, decoder, alpha, beta, interpret);
 
         function $T(encoder, decoder, model_size; precision=Float32, device=gpu)
 
-            alpha  = Dense(model_size, model_size, softplus, init=Flux.identity_init)
-            beta   = Dense(model_size, 1,          softplus, init=Flux.glorot_normal(rng_from_array([1.0/model_size])))
+            alpha     = Dense(model_size, model_size, softplus, init=Flux.identity_init)
+            beta      = Dense(model_size, 1,          softplus, init=Flux.glorot_normal(rng_from_array([1.0/model_size])))
         
-            decode = Dense(model_size, model_size, init=Flux.identity_init)
+            interpret = Dense(model_size, model_size, init=Flux.identity_init)
         
-            return $T(encoder, decoder, alpha, beta, decode, precision, device) |> device
+            return convert( $T(encoder, decoder, alpha, beta, interpret), precision=precision, device=device )
         
         end;
 
@@ -156,41 +154,43 @@ end
 
 function (model::AutoEncoder)(data::AbstractArray)
 
-    data       = @ignore data .|> model.precision |> model.device
+    data       = @ignore convert(model, data)
 
-    enc_out    = model.encoder(data)
-    enc_out    = permutedims( enc_out, (3, 2, 1, 4) )
+    enc_out    = model.encoder( data )
+    enc_out    = permutedims(enc_out, (3, 2, 1, 4))
 
-    alpha      = model.alpha(enc_out)
-    beta       = model.beta(enc_out)
+    alpha      = model.alpha( enc_out )
+    beta       = model.beta( enc_out )
 
-    param      = @ignore rand(Uniform(0, 1), size(alpha)) .|> model.precision |> model.device
+    param      = @ignore convert(model, rand(Uniform(0, 1), size(alpha)))
     param      = @ignore param ./ sum(param, dims=1)
 
     latent     = sample_dirichlet(param, alpha, beta)
 
-    interpret  = model.decode(latent)
-    interpret  = permutedims( interpret, (3, 2, 1, 4) )
+    interpret  = model.interpret( latent )
+    interpret  = permutedims(interpret, (3, 2, 1, 4))
 
-    dec_out    = model.decoder(interpret)
+    dec_out    = model.decoder( interpret )
 
     return (encoder = enc_out, decoder = dec_out, alpha = alpha, beta = beta, latent = latent)
 
 end
 
 
-Flux.gpu(x::AutoEncoder) = (x.device=gpu; return fmap(gpu, x))
-Flux.cpu(x::AutoEncoder) = (x.device=cpu; return fmap(cpu, x))
+Flux.gpu(x::AutoEncoder) = fmap(gpu, x)
+Flux.cpu(x::AutoEncoder) = fmap(cpu, x)
+
+Flux.outputsize(model::AutoEncoder, inputsize::Tuple) = Flux.outputsize(model.decoder, Flux.outputsize(model.encoder, inputsize))
+
+query_device(model::AutoEncoder)     = model.interpret.weight isa CuArray ? :gpu : :cpu
+query_precision(model::AutoEncoder)  = model.interpret.weight |> eltype
+convert(T::Type, model::AutoEncoder) = fmap( x -> x isa AbstractArray ? T.(x) : x, model )
+
+convert(model::AutoEncoder, x::AbstractArray)              = x .|> query_precision(model) |> eval(query_device(model))
+convert(model::AutoEncoder; precision=Float32, device=gpu) = convert(precision, model) |> device
 
 
-Flux.outputsize(model::AutoEncoder, inputsize::Tuple) = Flux.outputsize( model.decoder, Flux.outputsize( model.encoder, inputsize ) )
-
-
-
-struct NoNaN <: Flux.Optimise.AbstractOptimiser
-
-end
-
+struct NoNaN <: Flux.Optimise.AbstractOptimiser end
 
 function Flux.Optimise.apply!(o::NoNaN, x, Δ::AbstractArray{T}) where T
 

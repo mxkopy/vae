@@ -10,9 +10,9 @@ function latent_params( model::AutoEncoder )
 
         B = interpolate_data(A, B) |> collect
 
-        _, _, a1, b1, l1 = model( A |> DataIterators.preprocess_image .|> model.precision |> model.device )
+        _, _, a1, b1, l1 = model( convert( model, A |> preprocess_image ) )
 
-        _, _, a2, b2, l2 = model( B |> DataIterators.preprocess_image .|> model.precision |> model.device )
+        _, _, a2, b2, l2 = model( model( B |> preprocess_image ) )
 
         return (a1, b1, l1), (a2, b2, l2)
 
@@ -22,7 +22,9 @@ end
 
 function dirichlet_sampler( model::AutoEncoder )
 
-    return function(alpha, beta, params=ones( size(alpha) ) .|> model.precision |> model.device )
+    return function(alpha, beta, params=ones( size(alpha) ) )
+
+        params = convert(model, params)
 
         return sample_dirichlet( params ./ sum(params, dims=1), alpha, beta )
 
@@ -37,7 +39,7 @@ function latent_visualizer( model::AutoEncoder )
 
     return function( latent::AbstractArray )
 
-        visualize( model.decoder(latent)[:, :, :, 1] |> cpu |> from_color )
+        visualize( model.decoder(latent)[:, :, :, 1] |> from_color )
 
     end
 

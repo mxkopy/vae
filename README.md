@@ -34,16 +34,13 @@ There are various switches and flags with descriptive names in Main.jl. However,
 This repo provides a modality-independent library for Dirichlet VAEs. It's agnostic to its encoder and decoder, as long as their outputs make sense (i.e. they must output arrays of size [model_size, ...]). Subtyping AutoEncoder allows the use of the AutoEncoder forward-pass, provided the subtype has at least these fields:
 
 ```
-mutable struct T <: AutoEncoder
+struct T <: AutoEncoder
 
   encoder
   decoder
   alpha
   beta
-  decode
-
-  precision
-  device
+  interpret
     
 end
 
@@ -66,7 +63,9 @@ which does all the above for you, and provides a convenience constructor
 T(encoder, decoder, model_size; precision=Float32, device=gpu)
 ```
 
-that sets the alpha, beta and decode fields to sensible Dense layers. 
+that sets the alpha, beta and decode fields to sensible Dense layers.
+
+It's necessary to query the device (cpu or gpu) that the model is on and its precision. If you want to make a custom model, you should implement `query_device(model::T)` and `query_precision(model::T)` since by default it relies on the `model.interpret` field being a Dense layer. 
 
 # Loss Functions
 When possible, the methods provided in this library are generic to AutoEncoder (reconstruction_loss is rather domain-specific and doesn't make much sense to generalize). You can define custom behavior by specifying them to your model's type. Here is the list of signatures you can use should you want to do so:
