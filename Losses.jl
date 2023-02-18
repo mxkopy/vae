@@ -8,7 +8,7 @@ using Base.Threads
 
 
 
-function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.interpret.bias)), burn_in=1000000 )
+function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.interpret.bias)), burn_in=2^20 )
 
     true_alpha = convert(model, true_alpha)
 
@@ -18,9 +18,7 @@ function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.inter
         
         mme_alpha, N = @ignore mme(latent)
 
-        @ignore println(N)
-
-        true_alpha   = @ignore N > log(burn_in) ? mme_alpha : true_alpha
+        true_alpha   = @ignore N > log2(burn_in) ? convert(model, mme_alpha) : true_alpha
 
         return ELBO(decoder, alpha, true_alpha)
 
@@ -36,7 +34,7 @@ function visualize_loss( model::AutoEncoder )
 
     return function ( data... )
 
-        visualize( data... )
+        @async visualize( data... )
 
     end
 
@@ -44,11 +42,11 @@ end
 
 
 
-function print_loss( format )
+function print_loss( format::String="\nr_loss %.5e -elbo %.5e" )
 
-    return function( losses... )
+    @eval return function( losses... )
 
-        @eval @printf $format $(losses...)
+        @printf $format losses...
 
         flush(stdout)
 
@@ -74,11 +72,11 @@ function create_loss_function( model::AutoEncoder )
 
         E = elbo( e, l, α )
 
-        R = reconstruction(y, x)
+        R = reconstruction(x, y)
 
-        @ignore @async visualizer(y, x)
+        @ignore visualizer(x, y)
 
-        @ignore @async printer(R, -E)
+        @ignore printer(R, -E)
 
         return R - E * 1f-2
 
@@ -91,11 +89,11 @@ end
 #   ResNetVAE   #
 #################
 
-function interpolate_data(out::AbstractArray, data::AbstractArray)
+function interpolate_data(data::AbstractArray, out_size::Tuple)
 
-    mode = map( o -> o == 1 ? NoInterp() : BSpline(Linear()), size(out) )
+    mode = map( o -> o == 1 ? NoInterp() : BSpline(Linear()), out_size )
 
-    axes = map( ((d, o),) -> range(1, d, o), zip( size(data), size(out) ) )
+    axes = map( ((d, o),) -> range(1, d, o), zip( size(data), out_size ) )
 
     itp  = interpolate(data, mode)
 
@@ -105,9 +103,11 @@ end
 
 function reconstruction_loss( model::ResNetVAE )
 
-    return function ( y::AbstractArray, x::AbstractArray )
+    return function ( x::AbstractArray, y::AbstractArray )
 
-        return Flux.Losses.mse( y, @ignore convert(model, interpolate_data(y, x)) )
+        x = interpolate_data(x, y |> size)
+
+        return Flux.Losses.mse( @ignore convert(model, x), y )
 
     end
 

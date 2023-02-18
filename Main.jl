@@ -32,6 +32,10 @@ function arguments()
         "--load"
             arg_type = String
 
+        "--precision"
+            arg_type = String
+            default  = "f32"
+
         "--learning-rate"
             arg_type = String
             default  = "1e-3"
@@ -110,6 +114,14 @@ data_iterators = Dict(
 
 )
 
+available_precisions = Dict(
+
+    "f16" => Float16,
+    "f32" => Float32,
+    "f64" => Float64
+
+)
+
 if isnothing(args["load"])
 
     filename = "data/models/$(args["type"])$model_size.bson" 
@@ -132,8 +144,7 @@ if args["no-vis"]
 
 end
 
-
-model = model |> device
+model = convert(model, precision=available_precisions[args["precision"]], device=device)
 
 if args["train"]
 
