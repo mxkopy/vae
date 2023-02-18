@@ -14,7 +14,7 @@ function inv_gamma(x::T, α::T, β::T) where T
 
 end
 
-function sample_dirichlet(x, α, β)
+function sample_dirichlet(x::T, α::T, β::T) where T
 
     return inv_gamma.(x, α, β) ./ sum( inv_gamma.(x, α, β), dims=1 )
 
@@ -184,8 +184,8 @@ Flux.outputsize(model::AutoEncoder, inputsize::Tuple) = Flux.outputsize(model.de
 
 query_device(model::AutoEncoder)     = model.interpret.weight isa CuArray ? :gpu : :cpu
 query_precision(model::AutoEncoder)  = model.interpret.weight |> eltype
-convert(T::Type, model::AutoEncoder) = fmap( x -> x isa AbstractArray ? T.(x) : x, model )
 
+convert(T::Type, model::AutoEncoder)                       = fmap( x -> x isa AbstractArray ? T.(x) : x, model )
 convert(model::AutoEncoder, x::AbstractArray)              = x .|> query_precision(model) |> ( query_device(model) == :gpu ? gpu : cpu )
 convert(model::AutoEncoder; precision=Float32, device=gpu) = convert(precision, model) |> device
 
