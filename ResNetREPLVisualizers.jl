@@ -4,17 +4,20 @@ using BSON, ImageView, Gtk
 
 # you should probably use these in the REPL
 
-function latent_params( model::AutoEncoder )
+function latent_space_sampler( model::AutoEncoder )
 
-    return function( A, B )
+    return function( images::Vararg{AbstractArray} )
 
-        B = interpolate_data(A, B) |> collect
+        maxsize = maximum( image -> reduce(*, image |> size), images )
 
-        _, _, a1, b1, l1 = model( convert( model, A |> preprocess_image ) )
+        return map( images ) do image
 
-        _, _, a2, b2, l2 = model( model( B |> preprocess_image ) )
+            image = interpolate_data(maxsize, image)
 
-        return (a1, b1, l1), (a2, b2, l2)
+            return model(image)[:latent]
+
+
+        end
 
     end
 
@@ -22,11 +25,11 @@ end
 
 function dirichlet_sampler( model::AutoEncoder )
 
-    return function(alpha, beta, params=ones( size(alpha) ) )
+    return function( x, alpha=ones( size(alpha) ), beta=ones( size(alpha) ) )
 
-        params = convert(model, params)
+        x = convert(model, x ./ sum(x, dims=1) ) # ensures x is in the support of the dirichlet distribution
 
-        return sample_dirichlet( params ./ sum(params, dims=1), alpha, beta )
+        return sample_dirichlet( x, alpha, beta )
 
     end
 
@@ -39,14 +42,17 @@ function latent_visualizer( model::AutoEncoder )
 
     return function( latent::AbstractArray )
 
-        visualize( model.decoder(latent)[:, :, :, 1] |> from_color )
+        interpret = model.interpret(latent)
+        interpret = permutedims(interpret, (3, 2, 1, 4))
+
+        visualize( model.decoder(interpret)[:, :, :, 1] |> from_color )
 
     end
 
 end
 
 # example usage
-# model      = BSON.load("data/models/image64_1.bson")["model"] 
+# model      = BSON.load("data/models/image64.bson")["model"] 
 
 # latents    = latent_params( model )
 
@@ -54,7 +60,7 @@ end
 
 # visualizer = latent_visualizer( model )
 
-# A, B       = latents( Iterators.take(DataIterators.ImageData(shuffle=true), 2)... )
+# A, B       = latents( Iterators.take(ImageData(shuffle=true), 2)... )
 
 # visualizer( dirichlets( A[1] .+ B[1], A[2] .+ B[2] ) )
 
@@ -62,32 +68,5 @@ end
 
 #   visualizer( dirichlets( ((1f0 - dx) .* A[1]) .+ (dx .* B[1]), ((1f0 -dx) .* A[2]) .+ (dx .* B[2]) ) )
 #   sleep(0.1)
-
-# end
-
-
-# function visualize_latent_channels_IMG( vision, grid, size=(128, 128) )
-
-#     model_size = length(vision.alpha.b)
-
-#     vision = vision |> gpu
-
-#     (img,) = Iterators.take(ImageData(shuffle=true), 1) |> collect
-
-#     lat = latent(vision, img |> preprocess_image)
-
-#     visualize = ResNet.grid_visualizer(grid, size)
-
-#     images = map( 1:model_size ) do i
-
-#         mask    = [ idx[1] == i ? 1f0 : 0f0 for idx in CartesianIndices(lat) ] |> gpu
-
-#         decoded = decode(vision, lat .* mask)[:, :, :, 1]
-
-#         return decoded
-
-#     end
-
-#     visualize(images)
 
 # end
