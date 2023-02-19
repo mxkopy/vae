@@ -105,9 +105,9 @@ function reconstruction_loss( model::ResNetVAE )
 
     return function ( x::AbstractArray, y::AbstractArray )
 
-        x = interpolate_data(x, y |> size)
+        x = @ignore convert(model, interpolate_data(x, y |> size))
 
-        return Flux.Losses.mse( @ignore convert(model, x), y )
+        return Flux.Losses.mse( x, y )
 
     end
 
