@@ -37,8 +37,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     end
 
-
-    μ1, μ2 = α_true .^ 1, α_true .^ 2
+    μ1, μ2 = α_true, α_true .^ 2
 
     function S(p::AbstractVector, n)
 
@@ -48,19 +47,11 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     end
 
+    function mme(p::AbstractVector, n)
 
-    P̄ = α_true .* 0
-
-    function mme(P::AbstractVector, n)
-
-        P̄ = update.(P̄, P, n)
-
-        return S(P, n) .* P̄
+        return S(p, n) .* μ1
 
     end
-
-
-    N = 0
 
     return function( P::AbstractArray )
 
@@ -81,7 +72,6 @@ function alpha_mme(α_true::AbstractVector{T}) where T
     end
 
 end
-
 
 function kl_divergence(q::T, p::T) where T <: Number
 
