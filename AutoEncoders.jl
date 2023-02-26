@@ -37,7 +37,7 @@ function alpha_mme(α_true::AbstractVector{T}) where T
 
     end
 
-    μ1, μ2 = α_true, α_true .^ 2
+    N, μ1, μ2 = 0, α_true, α_true .^ 2
 
     function S(p::AbstractVector, n)
 
