@@ -8,7 +8,7 @@ using Base.Threads
 
 
 
-function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.interpret.bias)), burn_in=2^20 )
+function elbo_loss( model::AutoEncoder; true_alpha=fill(0.98, length(model.interpret.bias)), burn_in=mapreduce(length, +, Flux.params(model)) |> log2 |> floor |> Int |> exp2 )
 
     true_alpha = convert(model, true_alpha)
 
