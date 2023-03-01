@@ -6,6 +6,12 @@ using Zygote: @ignore
 import Flux.outputsize
 import Flux.trainmode!
 
+function stable_mean(x::AbstractArray; dims=1:length(size(x)))
+
+    sum( x ./ mapreduce(*, d -> size(x)[d], dims), dims=dims )
+
+end
+
 function inv_gamma(x::T, α::T, β::T) where T
 
     y::T = (1 / β) * (x * α * Γ(α)) ^ (1 / α)
@@ -88,21 +94,23 @@ function kl_divergence(Q::AbstractArray{T}, P::AbstractArray{T}) where T <: Numb
 
     KD = kl_divergence.(Q, P)
 
-    return sum( mean(KD, dims=[2, 3]), dims=1 )
+    return sum( stable_mean(KD, dims=[2, 3]), dims=1 )
 
 end
 
 function mean_log_probability( out::AbstractArray{T} ) where T <: Number
 
+    N       = @ignore size(out)[1] * size(out)[2] * size(out)[3]
+
     out_max = @ignore maximum(out)
 
-    return mean( logsoftmax(out_max .- out, dims=[1, 2, 3]), dims=[1, 2, 3] )
+    return sum( logsoftmax(out_max .- out, dims=[1, 2, 3]) ./ N, dims=[1, 2, 3] )
 
 end
 
 function ELBO(out::AbstractArray{T}, alpha::AbstractArray{T}, alpha_parameter::AbstractVector{T}) where T <: Number
 
-    elbo = mean_log_probability(out) .- kl_divergence(alpha, alpha_parameter )
+    elbo = mean_log_probability(out) .- kl_divergence(alpha, alpha_parameter)
 
     return sum(elbo)
 
@@ -177,14 +185,14 @@ query_precision(model::AutoEncoder)  = model.interpret.weight |> eltype
 
 convert(T::Type, model::AutoEncoder)                       = fmap( x -> x isa AbstractArray ? T.(x) : x, model )
 convert(model::AutoEncoder, x::AbstractArray)              = x .|> query_precision(model) |> ( query_device(model) == :gpu ? gpu : cpu )
-convert(model::AutoEncoder; precision=Float32, device=gpu) = convert(precision, model) |> device
+convert(model::Union{AutoEncoder, Flux.Optimise.AbstractOptimiser}; precision=Float32, device=gpu) = convert(precision, model) |> device
 
 
 struct NoNaN <: Flux.Optimise.AbstractOptimiser end
 
 function Flux.Optimise.apply!(o::NoNaN, x, Δ::AbstractArray{T}) where T
 
-    sanitize(δ)::T = isnan(δ) || isinf(δ) ? 0.0 : δ
+    sanitize(δ)::T = isnan(δ) || isinf(δ) ? T(0) : δ
 
     Δ = sanitize.(Δ)
 
