@@ -61,16 +61,20 @@ function upsampler( channels; stride=2, kernel=3 )
 
 end
 
+encoder_block( channels ) = ( downsampler( channels ), channelwise_dense( first(channels) + last(channels) => last(channels) ) )
+decoder_block( channels ) = (   upsampler( channels ), channelwise_dense( first(channels) + last(channels) => last(channels) ) )
+
+
 function resnet_vae_encoder( model_size )
 
     return Chain(
 
         x -> unit_normalize.(x),
-        downsampler( 3  => 8 ),            channelwise_dense( 11 => 8 ),
-        downsampler( 8  => 16 ),           channelwise_dense( 24 => 16 ),
-        downsampler( 16 => 32 ),           channelwise_dense( 48 => 32 ),
-        downsampler( 32 => 64 ),           channelwise_dense( 96 => 64 ),
-        downsampler( 64 => model_size ),   channelwise_dense( 64 + model_size => model_size )
+        encoder_block( 3 => 8 )...,
+        encoder_block( 8 => 16 )...,
+        encoder_block( 16 => 32 )...,
+        encoder_block( 32 => 64 )...,
+        encoder_block( 64 => model_size )...
         
     )
 
@@ -81,11 +85,12 @@ function resnet_vae_decoder( model_size )
 
     return Chain(
 
-        upsampler( model_size => 64 ),  channelwise_dense( model_size + 64 => 64 ),
-        upsampler( 64 => 32 ),          channelwise_dense( 96 => 32 ),
-        upsampler( 32 => 16 ),          channelwise_dense( 48 => 16 ),
-        upsampler( 16 => 8 ),           channelwise_dense( 24 => 8 ),
-        upsampler( 8 => 3 ),            channelwise_dense( 11 => 3 ), 
+        decoder_block( model_size => 64 )...,
+        decoder_block( 64 => 32 )...,
+        decoder_block( 32 => 16 )...,
+        decoder_block( 16 => 8 )...,
+        decoder_block( 8 => 3 )...,
+
         x -> unit_denormalize.(x)
 
     )
