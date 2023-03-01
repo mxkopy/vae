@@ -74,6 +74,14 @@ args = arguments()
 
 model_size = args["model-size"]
 
+precision  = Dict(
+
+"f16" => Float16,
+"f32" => Float32,
+"f64" => Float64
+
+)[args["precision"]]
+
 device     = args["no-gpu"] ? cpu : gpu
 
 lr         = parse(Float64, args["learning-rate"])
@@ -93,7 +101,7 @@ models = Dict(
     "image" => () -> ( 
         
         model      = ResNetVAE(model_size, device=device),
-        optimizer  = Optimiser( ClipNorm(1f0), NoNaN(), ADAM(lr, (0.9, 0.99)) )
+        optimizer  = Optimiser( ClipNorm(1f0), ADAM(lr, (0.9, 0.99)), NoNaN() )
 
 
     ), 
@@ -101,7 +109,7 @@ models = Dict(
     "audio" => () -> ( 
         
         model      = AudioVAE(model_size, device=device),
-        optimizer  = Optimiser( ClipNorm(1f0), NoNaN(), ADAM(lr, (0.9, 0.99)) )
+        optimizer  = Optimiser( ClipNorm(1f0), ADAM(lr, (0.9, 0.99)), NoNaN() )
         
     )
 
@@ -111,14 +119,6 @@ data_iterators = Dict(
 
     ResNetVAE => () ->  ImageIterator(;data_args...),
     DDSP      => () ->  AudioIterator(;data_args...)
-
-)
-
-available_precisions = Dict(
-
-    "f16" => Float16,
-    "f32" => Float32,
-    "f64" => Float64
 
 )
 
@@ -136,6 +136,8 @@ else
 
 end
 
+model = convert(model, precision=precision, device=device)
+
 
 # utterly disgusting
 if args["no-vis"]
@@ -143,8 +145,6 @@ if args["no-vis"]
     @eval visualize_loss(_::$(typeof(model))) = (args...) -> nothing
 
 end
-
-model = convert(model, precision=available_precisions[args["precision"]], device=device)
 
 if args["train"]
 
