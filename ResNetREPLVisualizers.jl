@@ -8,11 +8,13 @@ function latent_space_sampler( model::AutoEncoder )
 
     return function( images::Vararg{AbstractArray} )
 
-        maxsize = argmax( image -> reduce(*, image |> size), images ) |> size
+        min_h = minimum( img -> size(img, 1), images )
+
+        min_w = minimum( img -> size(img, 2), images )
 
         return map( images ) do image
 
-            image = interpolate_data(image, maxsize)
+            image = interpolate_data(image, (min_h, min_w, 3, 1))
 
             return model(image)[:latent]
 
@@ -22,11 +24,9 @@ function latent_space_sampler( model::AutoEncoder )
 
 end
 
-function dirichlet_sampler( model::AutoEncoder )
+function dirichlet_sampler()
 
-    return function( x, alpha=ones( size(alpha) ), beta=ones( size(alpha) ) )
-
-        x = convert(model, x ./ sum(x, dims=1) ) # ensures x is in the support of the dirichlet distribution
+    return function( x::AbstractArray{T}, alpha=ones(T, size(x)), beta=alpha ) where T
 
         return sample_dirichlet( x, alpha, beta )
 
@@ -51,21 +51,21 @@ function latent_visualizer( model::AutoEncoder )
 end
 
 # example usage
-# model      = BSON.load("data/models/image64.bson")["model"] 
+# model      = BSON.load("data/models/image1024.bson")["model"] 
 
 # latents    = latent_space_sampler( model )
 
-# dirichlets = dirichlet_sampler( model )
-
 # vis        = latent_visualizer( model )
 
-# A, B       = latents( Iterators.take(ImageData(shuffle=true), 2)... )
+# dirichlets = dirichlet_sampler()
 
-# vis( dirichlets( A[1] .+ B[1], A[2] .+ B[2] ) )
+# A, B       = latents( Iterators.take(ImageIterator(shuffle=true), 2)...)
+
+# vis( dirichlets( A .+ B, A .+ B ) )
 
 # for dx in range(0, 1f0, 100)
 
-#   vis( dirichlets( ((1f0 - dx) .* A[1]) .+ (dx .* B[1]), ((1f0 -dx) .* A[2]) .+ (dx .* B[2]) ) )
+#   vis( dirichlets( ((1f0 - dx) .* A) .+ (dx .* B), ((1f0 -dx) .* A) .+ (dx .* B) ) )
 #   sleep(0.1)
 
 # end
