@@ -8,14 +8,13 @@ function latent_space_sampler( model::AutoEncoder )
 
     return function( images::Vararg{AbstractArray} )
 
-        maxsize = maximum( image -> reduce(*, image |> size), images )
+        maxsize = argmax( image -> reduce(*, image |> size), images ) |> size
 
         return map( images ) do image
 
-            image = interpolate_data(maxsize, image)
+            image = interpolate_data(image, maxsize)
 
             return model(image)[:latent]
-
 
         end
 
@@ -38,7 +37,7 @@ end
 
 function latent_visualizer( model::AutoEncoder )
 
-    visualize = ResNet.single_visualizer()
+    visualize = single_visualizer()
 
     return function( latent::AbstractArray )
 
@@ -54,19 +53,19 @@ end
 # example usage
 # model      = BSON.load("data/models/image64.bson")["model"] 
 
-# latents    = latent_params( model )
+# latents    = latent_space_sampler( model )
 
 # dirichlets = dirichlet_sampler( model )
 
-# visualizer = latent_visualizer( model )
+# vis        = latent_visualizer( model )
 
 # A, B       = latents( Iterators.take(ImageData(shuffle=true), 2)... )
 
-# visualizer( dirichlets( A[1] .+ B[1], A[2] .+ B[2] ) )
+# vis( dirichlets( A[1] .+ B[1], A[2] .+ B[2] ) )
 
 # for dx in range(0, 1f0, 100)
 
-#   visualizer( dirichlets( ((1f0 - dx) .* A[1]) .+ (dx .* B[1]), ((1f0 -dx) .* A[2]) .+ (dx .* B[2]) ) )
+#   vis( dirichlets( ((1f0 - dx) .* A[1]) .+ (dx .* B[1]), ((1f0 -dx) .* A[2]) .+ (dx .* B[2]) ) )
 #   sleep(0.1)
 
 # end
