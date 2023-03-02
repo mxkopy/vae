@@ -8,7 +8,7 @@ import Flux.trainmode!
 
 function stable_mean(x::AbstractArray; dims=1:length(size(x)))
 
-    sum( x ./ mapreduce(*, d -> size(x)[d], dims), dims=dims )
+    sum( x ./ mapreduce(*, d -> size(x, d), dims), dims=dims )
 
 end
 
@@ -94,7 +94,7 @@ function kl_divergence(Q::AbstractArray{T}, P::AbstractArray{T}) where T <: Numb
 
     KD = kl_divergence.(Q, P)
 
-    return sum( stable_mean(KD, dims=[2, 3]), dims=1 )
+    return sum( mean(KD, dims=[2, 3]), dims=1 )
 
 end
 
@@ -104,7 +104,7 @@ function mean_log_probability( out::AbstractArray{T} ) where T <: Number
 
     out_max = @ignore maximum(out)
 
-    return sum( logsoftmax(out_max .- out, dims=[1, 2, 3]) ./ N, dims=[1, 2, 3] )
+    return mean( logsoftmax(out_max .- out, dims=[1, 2, 3]), dims=[1, 2, 3] )
 
 end
 
