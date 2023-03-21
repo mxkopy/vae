@@ -132,20 +132,3 @@ train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, loss_fn::
 Which is more or less a wrapper around Flux's training loop.
 
 However; if you've gotten this far, you may want to roll your own, which is not difficult at all given a model, loss function, data iterator, and optimiser. See https://fluxml.ai/Flux.jl/stable/training/training/#Training-Loops for an example.
-
-# Playing Around With It
-ResNetREPLVisualizers.jl provides a set of functions that make it easier to visualize manipulations in latent space for the ResNetVAE. A sample script is commented out at the bottom. 
-
-# Potential Issues
-The data folder is hardcoded for now. If it's not there, or its permissions are restrictive, then Julia may complain about not being able to find/access your data.
-
-Visualizers are GTK based (i.e. use ssh -X or the --no-vis flag, or ImageView may throw)
-
-Mixed memory and mixed precision aren't supported.
-
-This isn't a package, so the source dependency tree is important to note if you want to add more files.
-
-DDSP isn't finished.
-
-# Etc
-This was a learning project more than anything for me, so I really went all over the place. If manipulating multidimensional arrays is something you do often, I recommend checking out SomeMacros.jl, which provides a very powerful CUDA-compatible broadcast macro. I found it to be useful in implementing DDSP.
