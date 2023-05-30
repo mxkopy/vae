@@ -74,6 +74,24 @@ function create_loss_function( model::AutoEncoder )
 
         R = reconstruction(x, y)
 
+        Zygote.ignore() do 
+
+            if isnan(R)
+
+                serialize("data/models/imagenan.bson",  Dict("model" => model |> cpu))
+            
+                println(mapreduce(isnan, |, e)) # false
+                println(mapreduce(isnan, |, y)) # true
+                println(mapreduce(isnan, |, α)) # false
+                println(mapreduce(isnan, |, β)) # false
+                println(mapreduce(isnan, |, l)) # true
+
+                exit()
+
+            end
+
+        end
+
         @ignore visualizer(x, y)
 
         @ignore printer(R, -E)
@@ -135,12 +153,12 @@ function spectral_distance( out::AbstractArray, data::AbstractArray; ϵ=1f-8 )
 
 end
 
-function reconstruction_loss( model::DDSP )
+# function reconstruction_loss( model::DDSP )
 
-    return function ( y::AbstractArray, x::AbstractArray )
+#     return function ( y::AbstractArray, x::AbstractArray )
 
-        return Flux.Losses.mse( y, x ) + spectral_distance(y, x)
+#         return Flux.Losses.mse( y, x ) + spectral_distance(y, x)
 
-    end
+#     end
 
-end
+# end

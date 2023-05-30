@@ -1,6 +1,6 @@
 include("DataIterators.jl")
 include("AutoEncoders.jl")
-include("DDSP.jl")
+# include("DDSP.jl")
 include("ResNet.jl")
 
 
@@ -114,28 +114,28 @@ end
 
 
 
-function visualizer(model::DDSP)
+# function visualizer(model::DDSP)
 
-    # p1 = plot(1:1, [0])
-    # p2 = plot(1:1, [0])
+#     # p1 = plot(1:1, [0])
+#     # p2 = plot(1:1, [0])
 
-    return function(out, data)
+#     return function(out, data)
 
-        # x = mean(out,  dims=3)
-        # y = mean(data, dims=3)
+#         # x = mean(out,  dims=3)
+#         # y = mean(data, dims=3)
 
-        # x = reshape( x, length(x) )
-        # y = reshape( y, length(y) )
+#         # x = reshape( x, length(x) )
+#         # y = reshape( y, length(y) )
 
-        # for (o, d) in zip(out, data)
+#         # for (o, d) in zip(out, data)
 
-        #     push!(p1, o)
-        #     push!(p2, d)
+#         #     push!(p1, o)
+#         #     push!(p2, d)
 
-        # end
+#         # end
 
-        return nothing
+#         return nothing
 
-    end
+#     end
 
-end
+# end

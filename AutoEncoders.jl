@@ -6,17 +6,11 @@ using Zygote: @ignore
 import Flux.outputsize
 import Flux.trainmode!
 
-function stable_mean(x::AbstractArray; dims=1:length(size(x)))
-
-    sum( x ./ mapreduce(*, d -> size(x, d), dims), dims=dims )
-
-end
-
 function inv_gamma(x::T, α::T, β::T) where T
 
-    y::T = (1 / β) * (x * α * Γ(α)) ^ (1 / α)
+    α, β = max.((α, β), floatmin(T))
 
-    return isnan(y) ? T(0) : y
+    return max( (1 / β) * (x * α * Γ(α)) ^ (1 / α), floatmin(T) )
 
 end
 

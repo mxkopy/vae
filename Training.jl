@@ -1,13 +1,13 @@
 include("ResNetREPLVisualizers.jl")
 
 
-using Printf, Interpolations, BSON, ImageView, Gtk, CUDA
+using Printf, Interpolations, ImageView, Gtk, CUDA, Serialization
 using Flux: @epochs
 
 
 function save( save_path::String, model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser )
 
-    BSON.bson(save_path,  Dict("model" => model |> cpu, "optimizer" => optimizer |> cpu))
+    serialize(save_path,  Dict("model" => model |> cpu, "optimizer" => optimizer |> cpu))
     GC.gc(true)
     CUDA.functional() && CUDA.reclaim()
 

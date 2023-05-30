@@ -118,7 +118,7 @@ models = Dict(
 data_iterators = Dict(
 
     ResNetVAE => () ->  ImageIterator(;data_args...),
-    DDSP      => () ->  AudioIterator(;data_args...)
+    # DDSP      => () ->  AudioIterator(;data_args...)
 
 )
 
@@ -130,9 +130,13 @@ if isnothing(args["load"])
 else
 
     filename = "data/models/$(args["load"]).bson"
-    loaded   = BSON.load(filename)
+    loaded   = deserialize(filename)
 
-    model, optimizer = loaded["model"], loaded["optimizer"]
+    model     = "model" in keys(loaded) ? loaded["model"] : models[args["type"]]()[:model]
+    optimizer = "optimizer" in keys(loaded) ? loaded["optimizer"] : models[args["type"]]()[:optimizer]
+
+
+    # model, optimizer = loaded["model"], loaded["optimizer"]
 
 end
 

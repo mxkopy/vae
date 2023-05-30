@@ -51,7 +51,7 @@ function latent_visualizer( model::AutoEncoder )
 end
 
 # example usage
-# model      = BSON.load("data/models/image1024.bson")["model"] 
+# model      = deserialize("data/models/image1024.bson")["model"] 
 
 # latents    = latent_space_sampler( model )
 
