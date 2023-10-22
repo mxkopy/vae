@@ -3,8 +3,6 @@ The latent space of an autoencoder is the model's compressed 'internal' represen
 
 VAEs solve this problem in two ways: learning a probability distribution rather than a fixed set of points, and by minimizing the Kullback-Leibler divergence between it and a known, smooth distribution. By introducing randomness (variations!) into the decoder's inputs, the effects of individual data points are 'smoothed out' in latent space. The KLD, then, constrains them to be regular.
 
-Apparently, some probability distributions are better than others. Hence, I implemented the Dirichlet-VAE from https://arxiv.org/abs/1901.02739. 
-
 # Basic Usage
 First, run the following to install the dependencies:
 
@@ -31,7 +29,7 @@ By default, this will train an image model and visualize the output and input da
 There are various switches and flags with descriptive names in Main.jl. However, many are unused and the CLI will most likely soon be replaced.
 
 # General Usage
-This repo provides a modality-independent library for Dirichlet VAEs. It's agnostic to its encoder and decoder, as long as their outputs make sense (i.e. they must output arrays of size [model_size, ...]). Subtyping AutoEncoder allows the use of the AutoEncoder forward-pass, provided the subtype has at least these fields:
+This repo provides a modality-independent library for VAEs. It's agnostic to its encoder and decoder, as long as their outputs make sense (i.e. they must output arrays of size [model_size, ...]). Subtyping AutoEncoder allows the use of the AutoEncoder forward-pass, provided the subtype has at least these fields:
 
 ```
 struct T <: AutoEncoder
@@ -40,7 +38,6 @@ struct T <: AutoEncoder
   decoder
   alpha
   beta
-  interpret
     
 end
 
@@ -65,7 +62,7 @@ T(encoder, decoder, model_size; precision=Float32, device=gpu)
 
 that sets the alpha, beta and decode fields to sensible Dense layers.
 
-It's necessary to query the device (cpu or gpu) that the model is on and its precision. If you want to make a custom model, you should implement `query_device(model::T)` and `query_precision(model::T)` since by default it relies on the `model.interpret` field being a Dense layer. 
+It's necessary to query the device (cpu or gpu) that the model is on and its precision. If you want to make a custom model, you should implement `query_device(model::T)` and `query_precision(model::T)` since by default it relies on the `model.alpha` field being a Dense layer. 
 
 # Loss Functions
 When possible, the methods provided in this library are generic to AutoEncoder (reconstruction_loss is rather domain-specific and doesn't make much sense to generalize). You can define custom behavior by specifying them to your model's type. Here is the list of signatures you can use should you want to do so:

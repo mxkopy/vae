@@ -1,0 +1,48 @@
+services:
+
+  data:
+    build:
+      dockerfile: dockerfile
+    command: julia Main.jl data-server
+    env_file: .env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - ${DATA_PORT}:${DATA_PORT}
+
+  frontend:
+    build:
+      dockerfile: dockerfile
+    command: julia Main.jl frontend-server
+    env_file: .env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - ${FRONTEND_PORT}:${FRONTEND_PORT}
+
+  training:
+    build:
+      dockerfile: dockerfile
+    command: julia Main.jl training-server
+    env_file: .env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - ${VISUALIZER_PORT_1}:${VISUALIZER_PORT_1}
+      - ${VISUALIZER_PORT_2}:${VISUALIZER_PORT_2}
+
