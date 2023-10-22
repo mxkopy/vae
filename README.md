@@ -20,12 +20,13 @@ struct T <: AutoEncoder
 
   encoder
   decoder
-  alpha
-  beta
+  μ
+  σ
+  flow
     
 end
 
-Flux.@functor T (encoder, decoder, alpha, beta, decode)
+Flux.@functor T (encoder, decoder, μ, σ, flow)
 ```
 
 and of course, the output of each field that is a function makes sense. 
@@ -38,18 +39,10 @@ You can also use the macro
 @autoencoder T
 ```
 
-which does all the above for you, and provides a convenience constructor 
-
-```
-T(encoder, decoder, model_size; precision=Float32, device=gpu)
-```
-
-that sets the alpha, beta and decode fields to sensible Dense layers.
-
-It's necessary to query the device (cpu or gpu) that the model is on and its precision. If you want to make a custom model, you should implement `query_device(model::T)` and `query_precision(model::T)` since by default it relies on the `model.alpha` field being a Dense layer. 
+which does all the above for you.
 
 # Loss Functions
-When possible, the methods provided in this library are generic to AutoEncoder (reconstruction_loss is rather domain-specific and doesn't make much sense to generalize). You can define custom behavior by specifying them to your model's type. Here is the list of signatures you can use should you want to do so:
+When possible, the methods provided in this library are generic to AutoEncoder. You can define custom behavior by specifying them to your model's type. Here is the list of signatures you can use should you want to do so:
 
 ```
 create_loss_function(model::T)
@@ -83,17 +76,12 @@ function create_loss_function( model::AutoEncoder )
 end
 ```
 
-In general, these methods can persist important state in between iterations, such as a method-of-moments estimator or GUI. This sort of state should be initialized in the outer scope, and can be updated within the returned function.
+In general, these methods can persist important state in between iterations, such as a method-of-moments estimator or a connection to a server. This sort of state should be initialized in the outer scope, and can be updated within the returned function.
 
 # Data
-After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' with .wav audio. Julia is agnostic to the filesystem used, so you can sshfs or ln -s a COCO training dataset or similar (I use train2017). 
+After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' with .wav audio. The built container will inherit the same structure (i.e. soft links will remain soft links). 
 
-The DataIterator library stands fairly well alone, and is plug-and-play provided there aren't any formats in the dataset that Julia can't handle (.ogg, .mov, ...). For example, here are the function signatures for some of the high-level BatchIterators:
-
-```
-ImageIterator(;directory="data/image/", batches=1, shuffle=false) -> Array{T, 4}
-AudioIterator(;directory="data/audio/", sample_size=2^16, batches=1, shuffle=false, shuffle_dir=false) -> Array{T, 4}
-```
+The DataIterator library stands fairly well alone, and is plug-and-play provided there aren't any formats in the dataset that Julia can't handle (.ogg, .mov, ...).
 
 # Optimiser
 The final ingredient required for a training loop is an optimiser. The default
@@ -102,14 +90,5 @@ The final ingredient required for a training loop is an optimiser. The default
 Optimiser( ClipNorm(1f0), NoNaN(), ADAM(lr, (0.9, 0.99)) )
 ```
 
-works well, but it can readily be tuned to your case (see https://fluxml.ai/Flux.jl/stable/training/optimisers/ for inspiration). A word of warning - the functions involved in sampling the Dirichlet distribution can grow explosively, so including the NoNaN() optimiser is highly recommended.  
+works well, but it can readily be tuned to your case (see https://fluxml.ai/Flux.jl/stable/training/optimisers/ for inspiration).
 
-# Training
-Training.jl provides the following function:
-
-```
-train( model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser, loss_fn::Function, data::Union{DataIterator, BatchIterator}, filename::String; save_freq=10, epochs=1 )
-```
-Which is more or less a wrapper around Flux's training loop.
-
-However; if you've gotten this far, you may want to roll your own, which is not difficult at all given a model, loss function, data iterator, and optimiser. See https://fluxml.ai/Flux.jl/stable/training/training/#Training-Loops for an example.
