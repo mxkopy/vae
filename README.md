@@ -4,29 +4,13 @@ The latent space of an autoencoder is the model's compressed 'internal' represen
 VAEs solve this problem in two ways: learning a probability distribution rather than a fixed set of points, and by minimizing the Kullback-Leibler divergence between it and a known, smooth distribution. By introducing randomness (variations!) into the decoder's inputs, the effects of individual data points are 'smoothed out' in latent space. The KLD, then, constrains them to be regular.
 
 # Basic Usage
-First, run the following to install the dependencies:
+Run
 
 ```
-./deps.sh
+docker-compose up data training frontend
 ```
 
-Then, make sure you have images in the data/image directory - they will be the training set. It should look something like
-
-```
-./data/image/0001.jpg
-./data/image/0002.jpg
-...
-```
-
-Now, you can run:
-
-```
-julia Main.jl --train
-```
-
-By default, this will train an image model and visualize the output and input data in two GTK windows. 
-
-There are various switches and flags with descriptive names in Main.jl. However, many are unused and the CLI will most likely soon be replaced.
+By default, the visualizer is served at http://127.0.0.1:2998/frontend.html . 
 
 # General Usage
 This repo provides a modality-independent library for VAEs. It's agnostic to its encoder and decoder, as long as their outputs make sense (i.e. they must output arrays of size [model_size, ...]). Subtyping AutoEncoder allows the use of the AutoEncoder forward-pass, provided the subtype has at least these fields:
