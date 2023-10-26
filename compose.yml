@@ -1,8 +1,18 @@
 services:
 
+  frontend:
+    build:
+      dockerfile: dockerfile
+    command: julia Main.jl frontend-server
+    env_file: .env
+    ports:
+      - ${FRONTEND_PORT}:${FRONTEND_PORT}
+
   data:
     build:
       dockerfile: dockerfile
+      args:
+        DATA_PATH: $DATA_PATH
     command: julia Main.jl data-server
     env_file: .env
     deploy:
@@ -14,22 +24,7 @@ services:
               capabilities: [gpu]
     ports:
       - ${DATA_PORT}:${DATA_PORT}
-
-  frontend:
-    build:
-      dockerfile: dockerfile
-    command: julia Main.jl frontend-server
-    env_file: .env
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    ports:
-      - ${FRONTEND_PORT}:${FRONTEND_PORT}
-
+  
   training:
     build:
       dockerfile: dockerfile

@@ -1,6 +1,6 @@
 using Pkg
 
-Pkg.add( ["BSON", "Colors", "CUDA", "Distributions", "FFTW", "FileIO", "Flux", "HTTP", "Images", "ImageTransformations", "Interpolations", "JSON", "LibSndFile", "LinearAlgebra", "NNlib", "Plots", "Printf", "Random", "Serialization", "SliceMap", "SpecialFunctions", "Statistics", "VideoIO", "WAV", "Zygote"] )
+Pkg.add.( ["BSON", "Colors", "CUDA", "Distributions", "FFTW", "FileIO", "Flux", "HTTP", "Images", "ImageTransformations", "Interpolations", "JSON", "LibSndFile", "LinearAlgebra", "NNlib", "Plots", "Printf", "Random", "Serialization", "SliceMap", "SpecialFunctions", "Statistics", "VideoIO", "WAV", "Zygote"] )
 
 include("Training.jl")
 include("Frontend.jl")
@@ -21,7 +21,9 @@ end
 
 if "data-server" in ARGS
 
-    DataServer( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
+    iterator = BatchIterator( ImageReader(ENV["DATA_PATH"]), parse(Int, ENV["BATCHES"]) )
+
+    DataServer( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]), iterator=iterator )
 
 end
 
