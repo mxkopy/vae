@@ -7,7 +7,7 @@ VAEs solve this problem in two ways: learning a probability distribution rather 
 Run
 
 ```
-docker-compose up data training frontend
+DATA_SOURCE=/images/to/train/on docker-compose up data training frontend
 ```
 
 By default, the visualizer is served at http://127.0.0.1:2998/frontend.html . 

@@ -1,7 +1,4 @@
-using Pkg
-
-Pkg.add.( ["BSON", "Colors", "CUDA", "Distributions", "FFTW", "FileIO", "Flux", "HTTP", "Images", "ImageTransformations", "Interpolations", "JSON", "LibSndFile", "LinearAlgebra", "NNlib", "Plots", "Printf", "Random", "Serialization", "SliceMap", "SpecialFunctions", "Statistics", "VideoIO", "WAV", "Zygote"] )
-
+# include("deps.jl")
 include("Training.jl")
 include("Frontend.jl")
 
@@ -9,7 +6,7 @@ const prematch_env( x::String ) = [ last(y) for y in [ENV...] if occursin(x, fir
 
 if "frontend-server" in ARGS
 
-    HTTP.serve( ENV["FRONTEND_HOST"], parse(Int, ENV["FRONTEND_PORT"]), verbose=true ) do request::HTTP.Request
+    HTTP.serve( "0.0.0.0", parse(Int, ENV["FRONTEND_PORT"]), verbose=true ) do request::HTTP.Request
 
         return router( request )
 
@@ -21,9 +18,9 @@ end
 
 if "data-server" in ARGS
 
-    iterator = BatchIterator( ImageReader(ENV["DATA_PATH"]), parse(Int, ENV["BATCHES"]) )
+    iterator = BatchIterator( ImageReader(ENV["DATA_TARGET"]), parse(Int, ENV["BATCHES"]) )
 
-    DataServer( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]), iterator=iterator )
+    DataServer( host="0.0.0.0", port=parse(Int, ENV["DATA_PORT"]), iterator=iterator )
 
 end
 
@@ -37,14 +34,14 @@ if "training-server" in ARGS
 
     opt  = Optimiser( ClipNorm(1f0), ADAM(1f-3), NoNaN() )
 
-    vh = prematch_env("VISUALIZER_HOST")
+    vh = [ "0.0.0.0", "0.0.0.0" ]
     vp = parse.(Int, prematch_env("VISUALIZER_PORT")) 
 
     loss = create_loss_function( model, visualizer_hosts=vh, visualizer_ports=vp )
 
     trainer = Trainer( model, opt, loss )
 
-    for image in Connection( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
+    for image in Connection( host="ws://data", port=parse(Int, ENV["DATA_PORT"]) )
 
         trainer( image .|> Float32 )
 
