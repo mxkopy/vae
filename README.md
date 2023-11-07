@@ -79,7 +79,7 @@ end
 In general, these methods can persist important state in between iterations, such as a method-of-moments estimator or a connection to a server. This sort of state should be initialized in the outer scope, and can be updated within the returned function.
 
 # Data
-After subtyping AutoEncoder and defining an appropriate loss function, you can populate the 'data/image' directory with images and 'data/audio' with .wav audio. The built container will inherit the same structure (i.e. soft links will remain soft links). 
+For now, the data service container uses data on the host machine pointed to by the DATA_SOURCE environment variable.
 
 The DataIterator library stands fairly well alone, and is plug-and-play provided there aren't any formats in the dataset that Julia can't handle (.ogg, .mov, ...).
 
