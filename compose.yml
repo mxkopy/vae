@@ -4,7 +4,7 @@ services:
   frontend:
     build:
       dockerfile: dockerfile
-    command: julia Main.jl frontend-server
+    command: julia Main.jl frontend
     env_file: .env
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
@@ -12,7 +12,7 @@ services:
   data:
     build:
       dockerfile: dockerfile
-    command: julia Main.jl data-server
+    command: julia Main.jl data
     env_file: .env
     ports:
       - ${DATA_PORT}:${DATA_PORT}
@@ -22,7 +22,7 @@ services:
   training:
     build:
       dockerfile: dockerfile
-    command: julia Main.jl training-server
+    command: julia Main.jl training
     env_file: .env
     deploy:
       resources:

@@ -54,13 +54,13 @@ end
 
 
 
-function create_loss_function( model::AutoEncoder; kwargs... )
+function create_loss_function( model::AutoEncoder )
 
     E, R, V, P = (
 
         elbo_loss( model ),
         reconstruction_loss( model ),
-        visualize_loss( model, kwargs... ),
+        visualize_loss( model ),
         print_loss("\nr_loss %.5e -elbo %.5e")
 
     )

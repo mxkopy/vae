@@ -66,6 +66,16 @@ function read( reader::ImageReader, index::String )
 
 end
 
+function filter_by_extension( directories::Vector{String}, accepted_extensions::Vector{String} )
+
+    return filter( directories ) do directory
+
+        return mapreduce( x -> !isnothing(x), |, match.(Regex.(accepted_extensions), directory) )
+
+    end
+
+end
+
 function ImageReader( directory::String; accepted_extensions=[".jpg"] )
 
     directories = readdir(directory, join=true, sort=false)

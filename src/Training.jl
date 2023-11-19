@@ -1,7 +1,8 @@
-include("ResNetREPLVisualizers.jl")
+include("AutoEncoders.jl")
 include("Connections.jl")
+include("Losses.jl")
 
-using Printf, Interpolations, CUDA, Serialization, FileIO, HTTP, HTTP.WebSockets, Flux.Optimise
+using Printf, Interpolations, CUDA, Serialization, FileIO, HTTP, HTTP.WebSockets, Flux.Optimise, BSON
 using HTTP.WebSockets: isclosed
 
 struct Trainer{Model}
@@ -26,7 +27,7 @@ function (state::Trainer{ResNetVAE})(data::AbstractArray)
 
 end
 
-function train( state::Trainer, data::Connection )
+function train( state::Trainer, data )
 
     trainmode!( state.model )
 
@@ -38,8 +39,8 @@ function train( state::Trainer, data::Connection )
 
 end
 
-Flux.cpu( state::Trainer ) = Trainer( state.optimizer |> cpu, state.model |> cpu, state.data )
-Flux.gpu( state::Trainer ) = Trainer( state.optimizer |> gpu, state.model |> gpu, state.data )
+Flux.cpu( state::Trainer ) = Trainer( state.model |> cpu, state.optimizer |> cpu. state.loss )
+Flux.gpu( state::Trainer ) = Trainer( state.model |> gpu, state.optimizer |> gpu, state.loss )
 
 function save( save_path::String, model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser )
 

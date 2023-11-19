@@ -1,5 +1,4 @@
 include("DataIterators.jl")
-include("AutoEncoders.jl")
 include("ResNet.jl")
 
 #################
@@ -12,15 +11,13 @@ function from_color( image::AbstractArray )
 
 end
 
-function visualizer( model::ResNetVAE, kwargs... )
-
-    args = Dict(kwargs...)
+function visualizer( model::ResNetVAE )
 
     cx = Channel(1)
     cy = Channel(1)
 
-    X = @async DataServer( host=args[:visualizer_hosts][1], port=args[:visualizer_ports][1], iterator=cx, save=false )
-    Y = @async DataServer( host=args[:visualizer_hosts][2], port=args[:visualizer_ports][2], iterator=cy, save=false )
+    X = @async WSServer( host="0.0.0.0", port=parse(Int, ENV["VISUALIZER_PORT_1"]), iterator=cx, save=false )
+    Y = @async WSServer( host="0.0.0.0", port=parse(Int, ENV["VISUALIZER_PORT_2"]), iterator=cy, save=false )
 
     return function( x::AbstractArray, y::AbstractArray )
 

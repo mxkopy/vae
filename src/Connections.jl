@@ -2,51 +2,26 @@ include("DataIterators.jl")
 
 using HTTP, HTTP.WebSockets
 
-const T = Dict( "Float16" => Float16, "Float32" => Float32, "Float64" => Float64, "N0f8" => N0f8 )
+function Base.iterate( channel::Channel, state=nothing )
 
-# Connects to a server to retrieve data and put it into a buffer
-# By using a buffer, we can create an iterator that waits for data
-struct Connection{T}
+    if !isopen(channel) return nothing end
 
-    name::String
-    host::String
-    buffer::Channel{T}
+    return take!(channel), state
 
 end
 
-function Base.iterate( connection::Connection, state=nothing )
-
-    if !isopen(connection.buffer) return nothing end
-
-    return take!(connection.buffer), state
-
-end
-
-Base.close( connection::Connection ) = close( connection.buffer )
-
-# n_frames determines how many frames should be received from the server before running a function F on the received data 
-# i.e. first receive metadata, then receive payload -> n_frames=2
-function Connection(;
-
-    name::String="0", 
+function WSClient(
+    channel::Channel{Vector{UInt8}};
     host="ws://127.0.0.1", 
-    port=2999, 
-    buffer_size::Int=0, 
-    receiver::Function=default_receiver
+    port=ENV["DATA_PORT"]
 )
+    WebSockets.open( "$host:$port", verbose=true ) do websocket
 
-    connection = Connection( name, host, Channel(buffer_size) )
-
-    @async WebSockets.open( "$host:$port" ) do websocket
-
-        send( websocket, name )
-
-        while !isclosed( websocket ) && isopen( connection.buffer )
+        while !isclosed( websocket ) && isopen( channel )
 
             try
-            
-                data = receive( websocket ) |> receiver
-                put!( connection.buffer, data )
+                data = receive(websocket)
+                put!(channel, data)
 
             catch e
 
@@ -57,95 +32,72 @@ function Connection(;
 
         end
 
-        if !isopen( connection.buffer ) close( websocket ) end
+        if !isopen( channel ) close( websocket ) end
 
     end
 
-    return connection
+end
+
+function DataClient(;
+    host::String="ws://127.0.0.1",
+    port::Int=ENV["DATA_PORT"]
+)
+    channel = Channel{Vector{UInt8}}()
+
+    @async WSClient(channel, host=host, port=port)
+
+    return Iterators.map(channel) do message
+
+        return deserialize( IOBuffer(message) )
+
+    end
 
 end
 
-struct DataServer
+function WSServer(
+    channel::Channel{Vector{UInt8}};
+    host::String="0.0.0.0",
+    port::Int=ENV["DATA_PORT"]
+)
 
-    server::HTTP.Server
+    WebSockets.listen( host, port, verbose=true ) do websocket
+
+        while !isclosed( websocket ) && isopen( channel )
+
+            try
+                data = take!(channel)
+                send(websocket, data)
+
+            catch e
+
+                println(e)
+                break
+
+            end
+        end
+
+        if !isopen( channel ) close( websocket ) end
+
+    end
 
 end
 
 function DataServer(;
-
-    host::String="127.0.0.1",
-    port::Int=2999,
-    iterator=BatchIterator( ImageReader("/VAE/data/image"), 1 ),
-    sender::Function=default_sender,
-    save::Bool=true
-
+    iterator::BatchIterator=BatchIterator{ImageReader}( ENV["DATA_SOURCE"], 1 ), 
+    host::String="0.0.0.0",
+    port::Int=ENV["DATA_PORT"]
 )
+    channel = Channel{Vector{UInt8}}()
 
-    WebSockets.listen( host, port ) do websocket
+    @async WSServer(channel, host=host, port=port)
 
-        name = receive( websocket )
+    for data in iterator
 
-        while !isclosed( websocket ) && isopen( iterator )
+        buf = IOBuffer()
 
-            try
+        serialize(buf, data)
 
-                data = first( iterator )
-                sender( websocket, data )
-
-            catch e
-
-                println(e)
-
-                if save
-                    serialize(  "data/models/" * name * ".checkpoint", iterator )
-                end
-
-                break
-
-            end
-        end
-
-        if !isopen( iterator ) close( websocket ) end
-
-    end
-
-    # return DataServer( server )
-
-end
-
-
-function default_receiver( data )
-
-    i = findfirst( [ UInt8('\n') ], data ) |> first
-
-    metadata, payload = data[1:i], data[i+1:end]
-
-    type, data_size = split( metadata |> String, ";" )
-
-    return reshape( reinterpret( T[type], payload ), [ parse( Int, s ) for s in split(data_size) ]... )
-
-end
-
-
-function default_sender( websocket, array )
-
-    payload  = reinterpret( UInt8, reshape(array, reduce(*, size(array))) )
-
-    metadata = Vector{UInt8}( "$(eltype(array));$(reduce(*, "$s " for s in size(array)))\n" )
-
-    data = vcat( metadata, payload )
-
-    send( websocket, data )
-
-end
-
-
-
-function filter_by_extension( directories::Vector{String}, accepted_extensions::Vector{String} )
-
-    return filter( directories ) do directory
-
-        return mapreduce( x -> !isnothing(x), |, match.(Regex.(accepted_extensions), directory) )
+        put!(channel, buf.data)
 
     end
 

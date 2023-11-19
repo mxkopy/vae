@@ -2,9 +2,7 @@
 include("Training.jl")
 include("Frontend.jl")
 
-const prematch_env( x::String ) = [ last(y) for y in [ENV...] if occursin(x, first(y)) ]
-
-if "frontend-server" in ARGS
+if "frontend" in ARGS
 
     HTTP.serve( "0.0.0.0", parse(Int, ENV["FRONTEND_PORT"]), verbose=true ) do request::HTTP.Request
 
@@ -16,7 +14,7 @@ end
 
 
 
-if "data-server" in ARGS
+if "data" in ARGS
 
     iterator = BatchIterator( ImageReader(ENV["DATA_TARGET"]), parse(Int, ENV["BATCHES"]) )
 
@@ -26,7 +24,7 @@ end
 
 
 
-if "training-server" in ARGS
+if "training" in ARGS
 
     model = ResNetVAE( 64 )
 
@@ -34,16 +32,13 @@ if "training-server" in ARGS
 
     opt  = Optimiser( ClipNorm(1f0), ADAM(1f-3), NoNaN() )
 
-    vh = [ "0.0.0.0", "0.0.0.0" ]
-    vp = parse.(Int, prematch_env("VISUALIZER_PORT")) 
+    loss = create_loss_function( model )
 
-    loss = create_loss_function( model, visualizer_hosts=vh, visualizer_ports=vp )
+    trainer = Trainer( model, opt, loss ) |> gpu
 
-    trainer = Trainer( model, opt, loss )
+    for image in DataClient( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
 
-    for image in Connection( host="ws://data", port=parse(Int, ENV["DATA_PORT"]) )
-
-        trainer( image .|> Float32 )
+        trainer( image .|> Float32 .|> gpu )
 
     end
     
