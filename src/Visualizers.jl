@@ -13,16 +13,27 @@ end
 
 function visualizer( model::ResNetVAE )
 
-    cx = Channel(1)
-    cy = Channel(1)
+    cx = Channel{Vector{UInt8}}()
+    cy = Channel{Vector{UInt8}}()
 
-    X = @async WSServer( host="0.0.0.0", port=parse(Int, ENV["VISUALIZER_PORT_1"]), iterator=cx, save=false )
-    Y = @async WSServer( host="0.0.0.0", port=parse(Int, ENV["VISUALIZER_PORT_2"]), iterator=cy, save=false )
+    X = @async WSServer( cx, port=parse(Int, ENV["VISUALIZER_PORT_1"]) )
+    Y = @async WSServer( cy, port=parse(Int, ENV["VISUALIZER_PORT_2"]) )
+
+    function process( x::AbstractArray )
+
+        sz = Vector{UInt8}( "$(eltype(x));$(reduce(*, "$s " for s in size(x)))\n" )
+    
+        return [ sz..., reinterpret(UInt8, x[:, :, :, 1])... ]
+
+    end
 
     return function( x::AbstractArray, y::AbstractArray )
 
-        put!( cx, x[:, :, :, 1] .|> N0f8 )
-        put!( cy, y[:, :, :, 1] .|> N0f8 )
+        x = process(x)
+        y = process(y)
+        
+        put!( cx, x )
+        put!( cy, y )
 
     end
 

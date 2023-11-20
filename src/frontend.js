@@ -48,18 +48,6 @@ class Stream extends HTMLElement {
         this.canvas.setAttribute('height', this.getAttribute('height'))
         this.canvas.setAttribute('width',  this.getAttribute('width'))
 
-        this.ws.addEventListener("open", event => {
-
-            this.ws.send("wooo");
-            console.log(event);
-
-        })
-
-        const on_open = event => {
-            this.ws.send("wooo");
-            console.log(event);
-        }
-
         const on_message = event => {
 
             event.data.arrayBuffer().then( buf => {
@@ -87,18 +75,11 @@ class Stream extends HTMLElement {
 
         }
 
-        const on_close = event => {
+        // this.ws.addEventListener( "message", console.log )
 
-            this.ws = new WebSocket( `ws://${host}:${port}` );
-            this.ws.addEventListener( "open" )
-            this.ws_addEventListener( "message", on_message )
-            this.ws.addEventListener( "close", on_close );
-
-        }
-        
-        this.ws.addEventListener( "open", on_open )
-        this.ws.addEventListener( "close", event => console.log(event) )
+        this.ws.addEventListener( "open", console.log )
         this.ws.addEventListener( "message", on_message )
+        this.ws.addEventListener( "close", console.log )
 
         shadow.appendChild( this.canvas );
 
