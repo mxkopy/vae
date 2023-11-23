@@ -14,8 +14,6 @@ function sample_gaussian( μ::T, σ::T ) where T <: Number
 
     ϵ = @ignore rand( Normal(T(0), T(1)) )
 
-    # ϵ = @ignore 1
-
     return μ + σ * ϵ
 
 end
