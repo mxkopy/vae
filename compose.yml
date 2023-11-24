@@ -4,25 +4,29 @@ services:
   frontend:
     build:
       dockerfile: dockerfile
-    command: julia Main.jl frontend
+    command: julia /VAE/src/Main.jl frontend
     env_file: .env
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
+    volumes:
+      - ${SRC_SOURCE}:${SRC_TARGET}:shared
+  
 
   data:
     build:
       dockerfile: dockerfile
-    command: julia Main.jl data
+    command: julia /VAE/src/Main.jl data
     env_file: .env
     ports:
       - ${DATA_PORT}:${DATA_PORT}
     volumes:
       - ${DATA_SOURCE}:${DATA_TARGET}:shared
+      - ${SRC_SOURCE}:${SRC_TARGET}:shared
   
   training:
     build:
       dockerfile: dockerfile
-    command: julia Main.jl training
+    command: julia /VAE/src/Main.jl training
     env_file: .env
     deploy:
       resources:
@@ -34,4 +38,7 @@ services:
     ports:
       - ${VISUALIZER_PORT_1}:${VISUALIZER_PORT_1}
       - ${VISUALIZER_PORT_2}:${VISUALIZER_PORT_2}
+    volumes:
+      - ${SRC_SOURCE}:${SRC_TARGET}:shared
+
 
