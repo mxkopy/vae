@@ -53,7 +53,7 @@ class Stream extends HTMLElement {
 
         for( const name of Object.keys(metadata) ){
 
-            console.log(metadata[name] / (metadata[name].height * metadata[name].width) )
+            console.log(metadata[name].size / (metadata[name].height * metadata[name].width) )
 
             let [h, w] = [metadata[name].height, metadata[name].width];
 
