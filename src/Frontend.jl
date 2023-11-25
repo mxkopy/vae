@@ -2,13 +2,11 @@ using JSON, HTTP
 
 function substitute_environment_variables( text )
 
-    for var in eachmatch( r"\$([[:alnum:]_]*)", text )
+    for variable in eachmatch( r"\$([[:alnum:]_]*)", text )
 
-        variable = replace( var.match, r"\s" => "" ); 
+        value = ENV["$(variable |> first)"]
 
-        value = ENV["$(var |> first)"]
-
-        text = replace( text, variable => value )
+        text = replace( text, variable.match => value )
 
     end
 
