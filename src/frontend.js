@@ -17,6 +17,8 @@ function to_img( payload, h, w ){
 
     }
 
+    console.log(h, w);
+
     return new ImageData( pixels, h, w, {colorSpace: 'display-p3'} )
 
 }
@@ -27,6 +29,11 @@ class Stream extends HTMLElement {
 
         super();
 
+        this.on_mutation = this.on_mutation.bind(this);
+        this.on_message  = this.on_message.bind(this);
+
+        this.canvases = {};
+    
     }
 
     on_mutation( mutations, observer ){
@@ -90,11 +97,6 @@ class Stream extends HTMLElement {
     }    
 
     connectedCallback(){
-
-        this.on_mutation = this.on_mutation.bind(this);
-        this.on_message  = this.on_message.bind(this);
-
-        this.canvases = {};
 
         this.observer = new MutationObserver(this.on_mutation);
 
