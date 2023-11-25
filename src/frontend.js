@@ -17,7 +17,7 @@ function to_img( payload, h, w ){
 
     }
 
-    console.log(h, w);
+    console.log(pixels);
 
     return new ImageData( pixels, h, w, {colorSpace: 'display-p3'} )
 
@@ -83,8 +83,6 @@ class Stream extends HTMLElement {
             let length = size.reduce( (l, r) => l * r, 1 );
 
             let data = payload.slice(i, i + length + 1);
-
-            console.log(length);
 
             i += length;
 
