@@ -19,7 +19,7 @@ end
 
 function frontend_html( request::HTTP.Request )
 
-    frontend_html = open( "$(ENV["SRC_TARGET"])/frontend.html" ) |> Base.read |> substitute_environment_variables
+    frontend_html = open( "$(ENV["SRC_TARGET"])/frontend.html" ) |> Base.read |> String |> substitute_environment_variables
 
     return HTTP.Response( 200, ["Accept" => "text/html"], frontend_html )
 
