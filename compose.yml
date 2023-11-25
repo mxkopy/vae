@@ -35,8 +35,7 @@ services:
               count: 1
               capabilities: [gpu]
     ports:
-      - ${VISUALIZER_PORT_1}:${VISUALIZER_PORT_1}
-      - ${VISUALIZER_PORT_2}:${VISUALIZER_PORT_2}
+      - ${TRAINING_PORT}:${TRAINING_PORT}
     volumes:
       - ${SRC_SOURCE}:${SRC_TARGET}:shared
 

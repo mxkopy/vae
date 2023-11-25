@@ -49,6 +49,12 @@ class Stream extends HTMLElement {
 
             i += length;
 
+            // let ctx      = this.canvas.getContext('2d');
+            // let img      = to_img( payload, h, w );
+
+            // ctx.clearRect( 0, 0, this.canvas.height, this.canvas.width );
+            // ctx.putImageData( img, 0, 0 );
+
         }
     
     }    
@@ -72,24 +78,13 @@ class Stream extends HTMLElement {
             event.data.arrayBuffer().then( buf => {
 
                 let data = new Uint8ClampedArray( buf );
+        
+                let metadata_string = new TextDecoder().decode( data );
+    
+                let metadata = JSON.parse( metadata_string );
 
-                let i = data.findIndex( x => x == ';'.charCodeAt(0) );
-                let k = data.findIndex( x => x == '\n'.charCodeAt(0) );
-    
-                let typestr = new TextDecoder().decode( data.slice(0, i) );
-                let sizestr = new TextDecoder().decode( data.slice(i+1, k) );
-    
-                let size     = sizestr.split(' ');
-                let payload  = data.slice(k+1);
-    
-                const [h, w] = [ Number(size[0]), Number(size[1]) ]
-    
-                let ctx      = this.canvas.getContext('2d');
-                let img      = to_img( payload, h, w );
-    
-                ctx.clearRect( 0, 0, this.canvas.height, this.canvas.width );
-                ctx.putImageData( img, 0, 0 );
-
+                console.log(metadata);
+        
             })
 
         }
