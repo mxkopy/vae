@@ -30,7 +30,7 @@ function visualizer( model::ResNetVAE )
 
         metadata = JSON.json( [ [size(x)...], [size(y)...] ] ) * '\n';
 
-        put!( c, metadata )
+        put!( c, metadata |> Vector{UInt8} )
 
     end
 
