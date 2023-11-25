@@ -60,7 +60,9 @@ class Stream extends HTMLElement {
 
     }
 
-    on_message( message ){
+    async on_message( event ){
+
+        let message = await event.data.arrayBuffer();
 
         let payload = new Uint8ClampedArray( message );
 
@@ -83,14 +85,9 @@ class Stream extends HTMLElement {
             i += length;
 
             let ctx = this.canvases[name].getContext('2d');
-
-            console.log(this.canvases);
-            console.log(data);
-            console.log(size);
-
             let img = to_img( data, size[0], size[1] );
 
-            ctx.clearRect( 0, 0, this.canvases[name].getAttribute('height'), this.canvases[name].getAttribute('width') );
+            ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
             ctx.putImageData( img, 0, 0 );
 
         }
@@ -112,7 +109,8 @@ class Stream extends HTMLElement {
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
         this.ws.addEventListener( "open", console.log )
-        this.ws.addEventListener( "message", event => event.data.arrayBuffer().then( this.on_message ) )
+        // this.ws.addEventListener( "message", event => event.data.arrayBuffer().then( this.on_message ) )
+        this.ws.addEventListener( "message", this.on_message )
         this.ws.addEventListener( "close", console.log )
 
     }
