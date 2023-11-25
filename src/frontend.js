@@ -92,10 +92,12 @@ class Stream extends HTMLElement {
 
             let i = 0;
             let k = 0;
+
+            let [h, w] = [size[0], size[1]]
         
             while( i < h * w ){
         
-                pixels[ 0 + i * 4 ] = payload [ k + 0 * h * w ];
+                pixels[ 0 + i * 4 ] = payload[ k + 0 * h * w ];
                 pixels[ 1 + i * 4 ] = payload[ k + 1 * h * w ];
                 pixels[ 2 + i * 4 ] = payload[ k + 2 * h * w ];
                 pixels[ 3 + i * 4 ] = 255;
