@@ -28,6 +28,7 @@ class Stream extends HTMLElement {
         super();
 
         this.on_mutation = this.on_mutation.bind(this);
+        this.on_message  = this.on_message.bind(this);
 
         this.canvases = {};
     
@@ -108,23 +109,6 @@ class Stream extends HTMLElement {
         const port = this.getAttribute('port');
 
         this.ws = new WebSocket( `ws://${host}:${port}` );
-
-        // const on_message = event => {
-
-        //     event.data.arrayBuffer().then( message => {
-
-        //         let data = new Uint8ClampedArray( message );
-        
-        //         let metadata_string = new TextDecoder().decode( data );
-    
-        //         let metadata = JSON.parse( metadata_string );
-
-        //         console.log(metadata);
-
-        
-        //     })
-
-        // }
 
         this.ws.addEventListener( "open", console.log )
         this.ws.addEventListener( "message", event => event.data.arrayBuffer().then( this.on_message ) )
