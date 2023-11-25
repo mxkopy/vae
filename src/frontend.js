@@ -41,7 +41,7 @@ class Stream extends HTMLElement {
 
                 if( node.nodeName == 'canvas' ){
 
-                    this.canvases[node.name] = node;
+                    this.canvases[node.getAttribute('name')] = node;
 
                 }
 
@@ -49,13 +49,15 @@ class Stream extends HTMLElement {
 
             for( const node of mutation.removedNodes ){
 
-                delete this.canvases[node.name];
+                delete this.canvases[node.getAttribute('name')];
 
             }
 
         }
 
-        observer.disconnect()
+        console.log(this.canvases);
+
+        observer.disconnect();
 
     }
 
@@ -93,8 +95,6 @@ class Stream extends HTMLElement {
 
     connectedCallback(){
 
-        const shadow = this.attachShadow({ mode: "open" });
-
         this.observer = new MutationObserver(this.on_mutation);
 
         this.observer.observe( this, {
@@ -106,11 +106,6 @@ class Stream extends HTMLElement {
         const port = this.getAttribute('port');
 
         this.ws = new WebSocket( `ws://${host}:${port}` );
-
-        // this.canvas = document.createElement('canvas');
-
-        // this.canvas.setAttribute('height', this.getAttribute('height'))
-        // this.canvas.setAttribute('width',  this.getAttribute('width'))
 
         const on_message = event => {
 
@@ -132,8 +127,6 @@ class Stream extends HTMLElement {
         this.ws.addEventListener( "open", console.log )
         this.ws.addEventListener( "message", on_message )
         this.ws.addEventListener( "close", console.log )
-
-        // shadow.appendChild( this.canvas );
 
     }
 
