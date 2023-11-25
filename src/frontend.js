@@ -77,15 +77,13 @@ class Stream extends HTMLElement {
 
             event.data.arrayBuffer().then( message => {
 
-                console.log("test")
-
-                // let data = new Uint8ClampedArray( message );
+                let data = new Uint8ClampedArray( message );
         
-                // let metadata_string = new TextDecoder().decode( data );
+                let metadata_string = new TextDecoder().decode( data );
     
-                // let metadata = JSON.parse( metadata_string );
+                let metadata = JSON.parse( metadata_string );
 
-                // console.log(metadata);
+                console.log(metadata);
         
             })
 
@@ -95,7 +93,7 @@ class Stream extends HTMLElement {
         this.ws.addEventListener( "message", on_message )
         this.ws.addEventListener( "close", console.log )
 
-        shadow.appendChild( this.canvas );
+        // shadow.appendChild( this.canvas );
 
     }
 
