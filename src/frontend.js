@@ -51,7 +51,7 @@ class Stream extends HTMLElement {
 
         let i = metadata_end + 1;
 
-        console.log(metadata)
+        console.log(metadata);
 
         for( const name of Object.keys(metadata) ){
 

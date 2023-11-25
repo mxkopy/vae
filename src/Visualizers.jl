@@ -52,13 +52,13 @@ function visualizer( model::ResNetVAE )
 
         metadata = Dict(
 
-            "input"  => (
+            "input"  => Dict(
                 "height" => size(x, 1),
                 "width"  => size(x, 2),
                 "size"   => sizeof(input)
             ),
 
-            "output" => (
+            "output" => Dict(
                 "height" => size(y, 1),
                 "width"  => size(y, 2),
                 "size"   => sizeof(output)
