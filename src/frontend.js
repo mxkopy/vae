@@ -55,13 +55,13 @@ class Stream extends HTMLElement {
 
         }
 
-        console.log(this.canvases);
-
         observer.disconnect();
 
     }
 
-    parse_message( message ){
+    on_message( message ){
+
+        console.log(this.canvases)
 
         let payload = new Uint8ClampedArray( message );
 
@@ -70,6 +70,8 @@ class Stream extends HTMLElement {
         let metadata_string = new TextDecoder().decode( payload.slice(0, metadata_end) );
     
         let metadata = JSON.parse( metadata_string );
+
+        console.log( metadata )
 
         let i = metadata_end + 1;
 
@@ -107,25 +109,25 @@ class Stream extends HTMLElement {
 
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
-        const on_message = event => {
+        // const on_message = event => {
 
-            event.data.arrayBuffer().then( message => {
+        //     event.data.arrayBuffer().then( message => {
 
-                let data = new Uint8ClampedArray( message );
+        //         let data = new Uint8ClampedArray( message );
         
-                let metadata_string = new TextDecoder().decode( data );
+        //         let metadata_string = new TextDecoder().decode( data );
     
-                let metadata = JSON.parse( metadata_string );
+        //         let metadata = JSON.parse( metadata_string );
 
-                console.log(metadata);
+        //         console.log(metadata);
 
         
-            })
+        //     })
 
-        }
+        // }
 
         this.ws.addEventListener( "open", console.log )
-        this.ws.addEventListener( "message", on_message )
+        this.ws.addEventListener( "message", event => event.data.arrayBuffer().then( on_message ) )
         this.ws.addEventListener( "close", console.log )
 
     }
