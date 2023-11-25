@@ -24,7 +24,21 @@ function to_img( payload, h, w ){
 class Stream extends HTMLElement {
 
     constructor(){
+
         super();
+
+        this.on_mutation = this.on_mutation.bind(this);
+    
+    }
+
+    on_mutation( mutations ){
+
+        for( const mutation of mutations){
+
+            console.log(...mutation.addedNodes);
+
+        }
+
     }
 
     parse_message( message ){
@@ -63,6 +77,11 @@ class Stream extends HTMLElement {
 
         const shadow = this.attachShadow({ mode: "open" });
 
+        this.observer = new MutationObserver(this.on_mutation);
+        this.observer.observe( this, {
+            subtree: true
+        })
+
         const host = this.getAttribute('host');
         const port = this.getAttribute('port');
 
@@ -95,6 +114,12 @@ class Stream extends HTMLElement {
         this.ws.addEventListener( "close", console.log )
 
         // shadow.appendChild( this.canvas );
+
+    }
+
+    disconnectedCallback(){
+
+        this.observer.disconnect();
 
     }
 
