@@ -36,6 +36,8 @@ function visualizer( model::ResNetVAE )
 
         ) |> JSON.json
 
+        println(length(metadata))
+
         put!( channel, metadata |> Vector{UInt8} )
 
     end
