@@ -33,7 +33,7 @@ class Stream extends HTMLElement {
 
         }
 
-        observer.disconnect();
+        // observer.disconnect();
 
     }
 
@@ -49,7 +49,7 @@ class Stream extends HTMLElement {
     
         let metadata = JSON.parse( metadata_string );
 
-        // console.log(metadata);
+        console.log(metadata);
 
         let i = metadata_end + 1;
 
