@@ -1,10 +1,3 @@
-if "test" in ARGS
-
-    include("test.jl")
-
-end
-
-
 if "frontend" in ARGS
 
     include("Frontend.jl")
