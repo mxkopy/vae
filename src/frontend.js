@@ -1,26 +1,3 @@
-function to_img( payload, h, w ){
-
-    let pixels = new Uint8ClampedArray( payload.length + payload.length / 3 );
-
-    let i = 0;
-    let k = 0;
-
-    while( i < h * w ){
-
-        pixels[ 0 + i * 4 ] = payload[ k + 0 * h * w ];
-        pixels[ 1 + i * 4 ] = payload[ k + 1 * h * w ];
-        pixels[ 2 + i * 4 ] = payload[ k + 2 * h * w ];
-        pixels[ 3 + i * 4 ] = 255;
-
-        i++;
-        k++;
-
-    }
-
-    return new ImageData( pixels, h, w );
-
-}
-
 class Stream extends HTMLElement {
 
     constructor(){
@@ -85,29 +62,8 @@ class Stream extends HTMLElement {
             l = l += length;
 
             let ctx = this.canvases[name].getContext('2d');
-
-            // let img = to_img( data, size[0], size[1] );
-
-            let pixels = new Uint8ClampedArray( data.length + data.length / 3 );
-
-            let i = 0;
-            let k = 0;
-
-            let [h, w] = [size[0], size[1]]
         
-            while( i < h * w ){
-        
-                pixels[ 0 + i * 4 ] = payload[ k + 0 * h * w ];
-                pixels[ 1 + i * 4 ] = payload[ k + 1 * h * w ];
-                pixels[ 2 + i * 4 ] = payload[ k + 2 * h * w ];
-                pixels[ 3 + i * 4 ] = 255;
-        
-                i++;
-                k++;
-        
-            }
-        
-            let img = new ImageData( pixels, h, w );        
+            let img = new ImageData( data, h, w );        
 
             ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
             ctx.putImageData( img, 0, 0 );
@@ -131,7 +87,6 @@ class Stream extends HTMLElement {
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
         this.ws.addEventListener( "open", console.log )
-        // this.ws.addEventListener( "message", event => event.data.arrayBuffer().then( this.on_message ) )
         this.ws.addEventListener( "message", this.on_message )
         this.ws.addEventListener( "close", console.log )
 
