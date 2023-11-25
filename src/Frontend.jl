@@ -1,13 +1,5 @@
 using JSON, HTTP
 
-
-# function train_model( request::HTTP.Request )
-
-#     options = request.body |> String |> JSON.parse
-    
-
-# end
-
 function frontend_html( request::HTTP.Request )
 
     frontend_html = open( "$(ENV["SRC_TARGET"])/frontend.html" ) |> Base.read
