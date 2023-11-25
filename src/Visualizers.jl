@@ -34,9 +34,11 @@ function visualizer( model::ResNetVAE )
                 "size" => size(output)
             )
 
-        ) |> JSON.json
+        ) |> JSON.json |> Vector{UInt8} 
 
-        put!( channel, metadata * '\0' |> Vector{UInt8} )
+        message = vcat(metadata, [0], process(input), process(output))
+
+        put!( channel, message )
 
     end
 

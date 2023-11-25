@@ -81,7 +81,9 @@ class Stream extends HTMLElement {
 
         for( const name of Object.entries(metadata) ){
 
-            let size = metadata[name].size;
+            console.log(Object.entries(metadata))
+
+            let size = metadata[`${name}`].size;
 
             let length = size.reduce( (l, r) => l * r, 1 );
 
@@ -89,10 +91,10 @@ class Stream extends HTMLElement {
 
             i += length;
 
-            let ctx = this.canvases[name].getContext('2d');
+            let ctx = this.canvases[`${name}`].getContext('2d');
             let img = to_img( data, size[0], size[1] );
 
-            ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
+            ctx.clearRect( 0, 0, this.canvases[`${name}`].height, this.canvases[`${name}`].width );
             ctx.putImageData( img, 0, 0 );
 
         }
