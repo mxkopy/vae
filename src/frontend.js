@@ -70,7 +70,8 @@ class Stream extends HTMLElement {
     
         let metadata_string = new TextDecoder().decode( payload.slice(0, metadata_end) );
 
-        console.log( metadata_string.length )
+        console.log( metadata_string.length );
+        console.log( metadata_string );
     
         let metadata = JSON.parse( metadata_string );
 
