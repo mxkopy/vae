@@ -15,11 +15,13 @@ end
 
 function process( x::AbstractArray )
 
+    println( length(x) % 3 )
+
     h, w = size(x, 1), size(x, 2)
 
     x = x .|> N0f8
 
-    y = zeros(UInt8, length(x) + length(x) / 3)
+    y = zeros(UInt8, length(x) + length(x) ÷ 3)
 
     i = 0
     k = 0
