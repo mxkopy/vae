@@ -19,7 +19,7 @@ function to_img( payload, h, w ){
 
     console.log(pixels);
 
-    return new ImageData( pixels, h, w, {colorSpace: 'display-p3'} )
+    return new ImageData( pixels, h, w )
 
 }
 
@@ -87,6 +87,7 @@ class Stream extends HTMLElement {
             i += length;
 
             let ctx = this.canvases[name].getContext('2d');
+
             let img = to_img( data, size[0], size[1] );
 
             ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
