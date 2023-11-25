@@ -33,8 +33,8 @@ function process( x::AbstractArray )
         y[2 + i * 4 + 1] = x[k + 2 * h * w + 1]
         y[3 + i * 4 + 1] = 255
 
-        i++
-        k++
+        i += 1
+        k += 1
 
     end
 
