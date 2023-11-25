@@ -7,7 +7,15 @@ function process( x::AbstractArray )
 
     x = permutedims(x, (3, 2, 1, 4))
 
-    x = colorview(RGB, x) .|> RGBA
+    x = colorview(RGB, x) .|> RGBA{N0f8}
+
+    x = channelview(x)
+
+    x = reinterpret(UInt8, x)
+
+    x = reshape(x, length(x))
+
+    x = Vector{UInt8}(x)
 
     # x = x .|> N0f8
     # x = reinterpret(UInt8, x)
