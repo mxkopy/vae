@@ -53,13 +53,11 @@ class Stream extends HTMLElement {
 
         for( const name of Object.keys(metadata) ){
 
-            let size = metadata[name].size;
+            let [h, w] = metadata[name].size
 
-            let length = size.reduce( (l, r) => l * r, 1 );
+            let data = payload.slice(l, l + h * w * 4);
 
-            let data = payload.slice(l, l + length);
-
-            l = l += length;
+            l += h * w * 4;
 
             let ctx = this.canvases[name].getContext('2d');
         
