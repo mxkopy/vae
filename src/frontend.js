@@ -33,7 +33,7 @@ class Stream extends HTMLElement {
 
         }
 
-        // observer.disconnect();
+        observer.disconnect();
 
     }
 
@@ -51,13 +51,9 @@ class Stream extends HTMLElement {
 
         let i = metadata_end + 1;
 
-        console.log(metadata);
-
         for( const name of Object.keys(metadata) ){
 
             let [h, w] = [metadata[name].height, metadata[name].width]
-
-            // console.log(h, w, metadata[name].size)
 
             let data = payload.slice(i, i + metadata[name].size);
 
@@ -65,7 +61,7 @@ class Stream extends HTMLElement {
 
             let ctx = this.canvases[name].getContext('2d');
         
-            let img = new ImageData( data, h, w );        
+            let img = new ImageData( data, h, w, {colorSpace: 'display-p3'} );        
 
             ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
             ctx.putImageData( img, 0, 0 );
@@ -89,7 +85,7 @@ class Stream extends HTMLElement {
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
         this.ws.addEventListener( "open", console.log )
-        this.ws.addEventListener( "message", this.on_message )
+        this.ws.addEventListener( "message", event => this.on_message(event) )
         this.ws.addEventListener( "close", console.log )
 
     }

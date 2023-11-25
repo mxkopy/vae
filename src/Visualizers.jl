@@ -3,10 +3,6 @@ include("ResNet.jl")
 
 using JSON
 
-#################
-#   ResNetVAE   #
-#################
-
 function process( x::AbstractArray )
 
     h, w = size(x, 1), size(x, 2)
@@ -18,8 +14,6 @@ function process( x::AbstractArray )
 
     i = 0
     k = 0
-
-    # there has to be a more elegant way
 
     while i < h * w
 
