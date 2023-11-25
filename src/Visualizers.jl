@@ -20,7 +20,7 @@ function process( x::AbstractArray )
     # 1 2 3 - 
     # 2 1 3
 
-    x = permutedims(x, (3, 1, 2, 4))
+    x = permutedims(x, (1, 3, 2, 4))
 
     x = reshape(x, length(x))
 
