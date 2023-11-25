@@ -79,6 +79,7 @@ class Stream extends HTMLElement {
 
         this.observer = new MutationObserver(this.on_mutation);
         this.observer.observe( this, {
+            childList: true,
             subtree: true
         })
 
@@ -86,8 +87,6 @@ class Stream extends HTMLElement {
         const port = this.getAttribute('port');
 
         this.ws = new WebSocket( `ws://${host}:${port}` );
-
-        console.log( this.children[0] );
 
         // this.canvas = document.createElement('canvas');
 
