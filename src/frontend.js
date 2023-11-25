@@ -69,21 +69,14 @@ class Stream extends HTMLElement {
         let metadata_end = payload.findIndex( x => x == 0 );
     
         let metadata_string = new TextDecoder().decode( payload.slice(0, metadata_end) );
-
-        console.log( metadata_string.length );
-        console.log( metadata_string );
     
         let metadata = JSON.parse( metadata_string );
 
-        console.log( metadata )
-
         let i = metadata_end + 1;
 
-        for( const name of Object.entries(metadata) ){
+        for( const name of Object.keys(metadata) ){
 
-            console.log(Object.entries(metadata))
-
-            let size = metadata[`${name}`].size;
+            let size = metadata[name].size;
 
             let length = size.reduce( (l, r) => l * r, 1 );
 
@@ -91,10 +84,10 @@ class Stream extends HTMLElement {
 
             i += length;
 
-            let ctx = this.canvases[`${name}`].getContext('2d');
+            let ctx = this.canvases[name].getContext('2d');
             let img = to_img( data, size[0], size[1] );
 
-            ctx.clearRect( 0, 0, this.canvases[`${name}`].height, this.canvases[`${name}`].width );
+            ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
             ctx.putImageData( img, 0, 0 );
 
         }
@@ -129,4 +122,4 @@ class Stream extends HTMLElement {
 
 }
 
-customElements.define("video-stream", Stream );
+customElements.define( "video-stream", Stream );
