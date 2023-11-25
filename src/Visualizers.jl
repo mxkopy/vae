@@ -13,9 +13,12 @@ function process( x::AbstractArray )
 
     x = reinterpret(UInt8, x)
 
-    # 3 2 1
-    # 2 3 1
-    # 3 1 2
+    # 3 2 1 x
+    # 2 3 1 x
+    # 3 1 2 x
+    # 1 3 2
+    # 1 2 3 - 
+    # 2 1 3
 
     x = permutedims(x, (3, 1, 2, 4))
 
