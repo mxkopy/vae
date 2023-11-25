@@ -68,22 +68,24 @@ class Stream extends HTMLElement {
 
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
-        this.canvas = document.createElement('canvas');
+        // this.canvas = document.createElement('canvas');
 
-        this.canvas.setAttribute('height', this.getAttribute('height'))
-        this.canvas.setAttribute('width',  this.getAttribute('width'))
+        // this.canvas.setAttribute('height', this.getAttribute('height'))
+        // this.canvas.setAttribute('width',  this.getAttribute('width'))
 
         const on_message = event => {
 
-            event.data.arrayBuffer().then( buf => {
+            event.data.arrayBuffer().then( message => {
 
-                let data = new Uint8ClampedArray( buf );
+                console.log("test")
+
+                // let data = new Uint8ClampedArray( message );
         
-                let metadata_string = new TextDecoder().decode( data );
+                // let metadata_string = new TextDecoder().decode( data );
     
-                let metadata = JSON.parse( metadata_string );
+                // let metadata = JSON.parse( metadata_string );
 
-                console.log(metadata);
+                // console.log(metadata);
         
             })
 
