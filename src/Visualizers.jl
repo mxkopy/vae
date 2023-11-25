@@ -1,6 +1,8 @@
 include("DataIterators.jl")
 include("ResNet.jl")
 
+using JSON
+
 #################
 #   ResNetVAE   #
 #################
@@ -8,6 +10,8 @@ include("ResNet.jl")
 function process( x::AbstractArray )
 
     x = x .|> N0f8
+
+    metadata = JSON.json( [] )
 
     metadata = Vector{UInt8}( "$(eltype(x));$(reduce(*, "$s " for s in size(x)))\n" )
 
@@ -27,7 +31,9 @@ function visualizer( model::ResNetVAE )
     Y = @async WSServer( cy, port=parse(Int, ENV["VISUALIZER_PORT_2"]) )
 
     return function( x::AbstractArray, y::AbstractArray )
-        
+
+        metadata = JSON.json( [ [size(x)...], [size(y)...] ] ) * '\n';
+
         put!( cx, x |> process )
         put!( cy, y |> process )
 

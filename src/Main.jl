@@ -36,7 +36,7 @@ if "training" in ARGS
 
     trainer = Trainer( model, opt, loss ) |> gpu
 
-    for image in DataClient( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
+    for image in DataClient( host="ws://" * ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
 
         trainer( image .|> Float32 .|> gpu )
 

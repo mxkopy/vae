@@ -27,6 +27,32 @@ class Stream extends HTMLElement {
         super();
     }
 
+    parse_message( message ){
+
+        let payload = new Uint8ClampedArray( message );
+
+        let metadata_end = payload.findIndex( x => x == '\n'.charCodeAt(0) );
+    
+        let metadata_string = new TextDecoder().decode( payload.slice(0, metadata_end) );
+    
+        let metadata = JSON.parse( metadata_string );
+
+        let i = metadata_end + 1;
+
+        let data = [];
+
+        for( const size of metadata ){
+
+            let length = size.reduce( (l, r) => l * r, 1 );
+
+            data.push( payload.slice(i, length) )
+
+            i += length;
+
+        }
+    
+    }    
+
     connectedCallback(){
 
         const shadow = this.attachShadow({ mode: "open" });
