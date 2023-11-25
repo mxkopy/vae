@@ -71,21 +71,21 @@ class Stream extends HTMLElement {
 
         let i = metadata_end + 1;
 
-        let data = [];
+        for( const name of Object.entries(metadata) ){
 
-        for( const size of metadata ){
+            let size = metadata[name].size;
 
             let length = size.reduce( (l, r) => l * r, 1 );
 
-            data.push( payload.slice(i, length) )
+            let data = payload.slice(i, length);
 
             i += length;
 
-            // let ctx      = this.canvas.getContext('2d');
-            // let img      = to_img( payload, h, w );
+            let ctx = this.canvases[name].getContext('2d');
+            let img = to_img( data, size[0], size[1] );
 
-            // ctx.clearRect( 0, 0, this.canvas.height, this.canvas.width );
-            // ctx.putImageData( img, 0, 0 );
+            ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
+            ctx.putImageData( img, 0, 0 );
 
         }
     

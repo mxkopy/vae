@@ -11,11 +11,7 @@ function process( x::AbstractArray )
 
     x = x .|> N0f8
 
-    metadata = Vector{UInt8}( "$(eltype(x));$(reduce(*, "$s " for s in size(x)))\n" )
-
-    payload  = reinterpret( UInt8, reshape(x, reduce(*, size(x))) )
-
-    return vcat( metadata, payload )
+    return reinterpret( UInt8, reshape(x, reduce(*, size(x))) )
 
 end
 
@@ -28,9 +24,15 @@ function visualizer( model::ResNetVAE )
 
     return function( input::AbstractArray, output::AbstractArray )
 
-        metadata = Dict( 
+        metadata = Dict(
 
-            "sizes" => ("input" => size(input), "output" => size(output))
+            "input"  => (
+                "size" => size(input)
+            ),
+
+            "output" => (
+                "size" => size(output)
+            )
 
         ) |> JSON.json
 
