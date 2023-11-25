@@ -2,8 +2,9 @@ include("Training.jl")
 include("DataIterators.jl")
 include("Frontend.jl")
 
-if "frontend" in ARGS
 
+
+if "frontend" in ARGS
 
     HTTP.serve( "0.0.0.0", parse(Int, ENV["FRONTEND_PORT"]), verbose=true ) do request::HTTP.Request
 
@@ -16,7 +17,6 @@ end
 
 
 if "data" in ARGS
-
 
     iterator = BatchIterator( ImageReader(ENV["DATA_TARGET"]), parse(Int, ENV["BATCHES"]) )
 
