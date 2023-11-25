@@ -41,8 +41,6 @@ class Stream extends HTMLElement {
 
         let message = await event.data.arrayBuffer();
 
-        console.log(message);
-
         let payload = new Uint8ClampedArray( message );
 
         let metadata_end = payload.findIndex( x => x == 0 );
@@ -51,13 +49,15 @@ class Stream extends HTMLElement {
     
         let metadata = JSON.parse( metadata_string );
 
+        // console.log(metadata);
+
         let i = metadata_end + 1;
 
         for( const name of Object.keys(metadata) ){
 
             let [h, w] = [metadata[name].height, metadata[name].width]
 
-            let data = payload.slice(i, metadata[name].size);
+            let data = payload.slice(i, i + metadata[name].size);
 
             i += metadata[name].size;
 
