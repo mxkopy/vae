@@ -62,8 +62,6 @@ class Stream extends HTMLElement {
 
     on_message( message ){
 
-        console.log( this.canvases )
-
         let payload = new Uint8ClampedArray( message );
 
         let metadata_end = payload.findIndex( x => x == 0 );
@@ -80,14 +78,14 @@ class Stream extends HTMLElement {
 
             let length = size.reduce( (l, r) => l * r, 1 );
 
-            let data = payload.slice(i, length);
+            let data = payload.slice(i, i + length + 1);
 
             i += length;
 
             let ctx = this.canvases[name].getContext('2d');
             let img = to_img( data, size[0], size[1] );
 
-            ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
+            ctx.clearRect( 0, 0, this.canvases[name].getAttribute('height'), this.canvases[name].getAttribute('width') );
             ctx.putImageData( img, 0, 0 );
 
         }
