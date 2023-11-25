@@ -28,16 +28,34 @@ class Stream extends HTMLElement {
         super();
 
         this.on_mutation = this.on_mutation.bind(this);
+
+        this.canvases = {};
     
     }
 
-    on_mutation( mutations ){
+    on_mutation( mutations, observer ){
 
         for( const mutation of mutations){
 
-            console.log(...mutation.addedNodes);
+            for( const node of mutation.addedNodes ){
+
+                if( node.nodeName == 'canvas' ){
+
+                    this.canvases[node.name] = node;
+
+                }
+
+            }
+
+            for( const node of mutation.removedNodes ){
+
+                delete this.canvases[node.name];
+
+            }
 
         }
+
+        observer.disconnect()
 
     }
 
@@ -78,6 +96,7 @@ class Stream extends HTMLElement {
         const shadow = this.attachShadow({ mode: "open" });
 
         this.observer = new MutationObserver(this.on_mutation);
+
         this.observer.observe( this, {
             childList: true,
             subtree: true
@@ -102,6 +121,8 @@ class Stream extends HTMLElement {
                 let metadata_string = new TextDecoder().decode( data );
     
                 let metadata = JSON.parse( metadata_string );
+
+                console.log(metadata);
 
         
             })

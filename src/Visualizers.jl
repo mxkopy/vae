@@ -22,13 +22,17 @@ end
 
 function visualizer( model::ResNetVAE )
 
-    c = Channel{Vector{UInt8}}()
+    channel = Channel{Vector{UInt8}}()
 
-    @async WSServer( c, port=parse(Int, ENV["TRAINING_PORT"]) )
+    @async WSServer( channel, port=parse(Int, ENV["TRAINING_PORT"]) )
 
-    return function( x::AbstractArray, y::AbstractArray )
+    return function( input::AbstractArray, output::AbstractArray )
 
-        metadata = JSON.json( [ [size(x)...], [size(y)...] ] ) * '\0';
+        metadata = Dict( 
+
+            "sizes" => ("input" => size(input), "output" => size(output))
+
+        ) |> JSON.json
 
         put!( c, metadata |> Vector{UInt8} )
 
