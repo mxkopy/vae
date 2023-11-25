@@ -49,8 +49,6 @@ class Stream extends HTMLElement {
     
         let metadata = JSON.parse( metadata_string );
 
-        console.log(metadata);
-
         let i = metadata_end + 1;
 
         for( const name of Object.keys(metadata) ){
@@ -58,6 +56,8 @@ class Stream extends HTMLElement {
             let [h, w] = [metadata[name].height, metadata[name].width]
 
             let data = payload.slice(i, i + metadata[name].size);
+
+            console.log(data.length == h * w * 4);
 
             i += metadata[name].size;
 
