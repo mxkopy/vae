@@ -53,7 +53,7 @@ class Stream extends HTMLElement {
 
         for( const name of Object.keys(metadata) ){
 
-            let [h, w] = [metadata[name].height, metadata[name].width]
+            let [h, w] = [metadata[name].height, metadata[name].width];
 
             let data = payload.slice(i, i + metadata[name].size);
 

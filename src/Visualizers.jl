@@ -5,29 +5,33 @@ using JSON
 
 function process( x::AbstractArray )
 
-    h, w = size(x, 1), size(x, 2)
+    x = permutedims(x, (3, 2, 1, 4))
 
-    x = x .|> N0f8
-    x = reinterpret(UInt8, x)
+    x = colorview(RGB, x) .|> RGBA
 
-    y = zeros(UInt8, length(x) + length(x) ÷ 3)
+    # x = x .|> N0f8
+    # x = reinterpret(UInt8, x)
 
-    i = 0
-    k = 0
+    # y = zeros(UInt8, length(x) + length(x) ÷ 3)
 
-    while i < h * w
+    # i = 0
+    # k = 0
 
-        y[0 + i * 4 + 1] = x[k + 0 * h * w + 1]
-        y[1 + i * 4 + 1] = x[k + 1 * h * w + 1]
-        y[2 + i * 4 + 1] = x[k + 2 * h * w + 1]
-        y[3 + i * 4 + 1] = 255
+    # while i < h * w
 
-        i += 1
-        k += 1
+    #     y[0 + i * 4 + 1] = x[k + 0 * h * w + 1]
+    #     y[1 + i * 4 + 1] = x[k + 1 * h * w + 1]
+    #     y[2 + i * 4 + 1] = x[k + 2 * h * w + 1]
+    #     y[3 + i * 4 + 1] = 255
 
-    end
+    #     i += 1
+    #     k += 1
 
-    return y
+    # end
+
+    # return y
+
+    return x
 
 end
 
@@ -49,16 +53,16 @@ function visualizer( model::ResNetVAE )
             "input"  => Dict(
                 "height" => size(x, 1),
                 "width"  => size(x, 2),
-                "size"   => sizeof(input)
+                "size"   => length(input)
             ),
 
             "output" => Dict(
                 "height" => size(y, 1),
                 "width"  => size(y, 2),
-                "size"   => sizeof(output)
+                "size"   => length(output)
             )
 
-        ) |> JSON.json |> Vector{UInt8} 
+        ) |> JSON.json |> Vector{UInt8}
 
         message = vcat( metadata, [0], input, output )
 
