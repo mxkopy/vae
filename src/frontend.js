@@ -1,4 +1,4 @@
-function to_img( payload, h, w ){
+async function to_img( payload, h, w ){
 
     let pixels = new Uint8ClampedArray( payload.length + payload.length / 3 );
 
@@ -17,9 +17,7 @@ function to_img( payload, h, w ){
 
     }
 
-    console.log(pixels);
-
-    return new ImageData( pixels, h, w )
+    return new ImageData( pixels, h, w );
 
 }
 
@@ -88,7 +86,7 @@ class Stream extends HTMLElement {
 
             let ctx = this.canvases[name].getContext('2d');
 
-            let img = to_img( data, size[0], size[1] );
+            let img = await to_img( data, size[0], size[1] );
 
             ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
             ctx.putImageData( img, 0, 0 );
