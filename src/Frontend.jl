@@ -2,7 +2,7 @@ using JSON, HTTP
 
 function substitute_environment_variables( text )
 
-    for var in eachmatch( r"\$(.*)\s", text )
+    for var in eachmatch( r"\$([[:alnum:]_]*)", text )
 
         variable = replace( var.match, r"\s" => "" ); 
 
