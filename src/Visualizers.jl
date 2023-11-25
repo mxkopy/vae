@@ -13,40 +13,11 @@ function process( x::AbstractArray )
 
     x = reinterpret(UInt8, x)
 
-    # 3 2 1 x
-    # 2 3 1 x
-    # 3 1 2 x
-    # 1 3 2
-    # 1 2 3 - 
-    # 2 1 3
-
     x = permutedims(x, (1, 3, 2, 4))
 
     x = reshape(x, length(x))
 
     x = Vector{UInt8}(x)
-
-    # x = x .|> N0f8
-    # x = reinterpret(UInt8, x)
-
-    # y = zeros(UInt8, length(x) + length(x) ÷ 3)
-
-    # i = 0
-    # k = 0
-
-    # while i < h * w
-
-    #     y[0 + i * 4 + 1] = x[k + 0 * h * w + 1]
-    #     y[1 + i * 4 + 1] = x[k + 1 * h * w + 1]
-    #     y[2 + i * 4 + 1] = x[k + 2 * h * w + 1]
-    #     y[3 + i * 4 + 1] = 255
-
-    #     i += 1
-    #     k += 1
-
-    # end
-
-    # return y
 
     return x
 
