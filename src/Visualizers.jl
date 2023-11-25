@@ -28,7 +28,7 @@ function visualizer( model::ResNetVAE )
 
     return function( x::AbstractArray, y::AbstractArray )
 
-        metadata = JSON.json( [ [size(x)...], [size(y)...] ] ) * '\n';
+        metadata = JSON.json( [ [size(x)...], [size(y)...] ] ) * '\0';
 
         put!( c, metadata |> Vector{UInt8} )
 

@@ -31,7 +31,7 @@ class Stream extends HTMLElement {
 
         let payload = new Uint8ClampedArray( message );
 
-        let metadata_end = payload.findIndex( x => x == '\n'.charCodeAt(0) );
+        let metadata_end = payload.findIndex( x => x == 0 );
     
         let metadata_string = new TextDecoder().decode( payload.slice(0, metadata_end) );
     
@@ -68,6 +68,8 @@ class Stream extends HTMLElement {
 
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
+        console.log( this.children );
+
         // this.canvas = document.createElement('canvas');
 
         // this.canvas.setAttribute('height', this.getAttribute('height'))
@@ -83,7 +85,6 @@ class Stream extends HTMLElement {
     
                 let metadata = JSON.parse( metadata_string );
 
-                console.log(metadata);
         
             })
 
