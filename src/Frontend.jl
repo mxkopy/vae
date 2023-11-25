@@ -4,7 +4,7 @@ function substitute_environment_variables( text )
 
     for variable in eachmatch( r"\$([[:alnum:]_]*)", text )
 
-        value = ENV["$(variable |> first)"]
+        value = ENV[variable |> first]
 
         text = replace( text, variable.match => value )
 
