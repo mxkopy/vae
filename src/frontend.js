@@ -83,9 +83,12 @@ class Stream extends HTMLElement {
             i += length;
 
             let ctx = this.canvases[name].getContext('2d');
-            let img = to_img( data, size[0], size[1] );
 
             console.log(this.canvases);
+            console.log(data);
+            console.log(size);
+
+            let img = to_img( data, size[0], size[1] );
 
             ctx.clearRect( 0, 0, this.canvases[name].getAttribute('height'), this.canvases[name].getAttribute('width') );
             ctx.putImageData( img, 0, 0 );
