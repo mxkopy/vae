@@ -68,7 +68,7 @@ class Stream extends HTMLElement {
 
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
-        console.log( this.children );
+        console.log( this.children[0] );
 
         // this.canvas = document.createElement('canvas');
 
