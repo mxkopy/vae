@@ -48,14 +48,14 @@ function visualizer( model::ResNetVAE )
             "input"  => Dict(
                 "height"   => size(x, 1),
                 "width"    => size(x, 2),
-                "size"     => length(input),
+                "size"     => sizeof(input),
                 "position" => 0
             ),
 
             "output" => Dict(
                 "height"   => size(y, 1),
                 "width"    => size(y, 2),
-                "size"     => length(output), 
+                "size"     => sizeof(output), 
                 "position" => 1
             )
 

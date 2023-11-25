@@ -1,6 +1,6 @@
 include("DataIterators.jl")
 
-using HTTP, HTTP.WebSockets
+using HTTP, HTTP.WebSockets, JSON
 
 function Base.iterate( channel::Channel, state=nothing )
 
@@ -8,6 +8,20 @@ function Base.iterate( channel::Channel, state=nothing )
 
     return take!(channel), state
 
+end
+
+function to_message( object, info::AbstractDict=Dict() )
+
+    payload    = reinterpret(UInt8, object)
+
+    basic_info = Dict( :size => sizeof(object) )
+
+    info       = merge( basic_info, info )
+
+    metadata   = info |> JSON.json |> Vector{UInt8}
+
+    return vcat( metadata, [0], payload )
+    
 end
 
 function WSClient(

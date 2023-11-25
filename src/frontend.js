@@ -1,3 +1,20 @@
+
+
+function from_message( message ){
+
+    let metadata_end = message.findIndex( x => x == 0 );
+
+    let metadata_string = new TextDecoder().decode( message.slice(0, metadata_end) );
+
+    let metadata = JSON.parse( metadata_string );
+
+    let payload = message.slice( metadata_end + 1, metadata.size + 1 );
+
+    return { ...metadata, data: payload }
+
+}
+
+
 class Stream extends HTMLElement {
 
     constructor(){
@@ -53,11 +70,11 @@ class Stream extends HTMLElement {
 
         for( const name of Object.keys(metadata) ){
 
-            console.log(metadata[name].size / (metadata[name].height * metadata[name].width) )
-
             let [h, w] = [metadata[name].height, metadata[name].width];
 
             let data = payload.slice(i, i + metadata[name].size);
+
+            console.log( data.length, metadata[name] )
 
             i += metadata[name].size;
 
