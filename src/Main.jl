@@ -1,8 +1,13 @@
-# include("deps.jl")
-include("Training.jl")
-include("Frontend.jl")
+if "test" in ARGS
+
+    include("test.jl")
+
+end
+
 
 if "frontend" in ARGS
+
+    include("Frontend.jl")
 
     HTTP.serve( "0.0.0.0", parse(Int, ENV["FRONTEND_PORT"]), verbose=true ) do request::HTTP.Request
 
@@ -16,6 +21,9 @@ end
 
 if "data" in ARGS
 
+    include("DataIterators.jl")
+    include("Connections.jl")
+
     iterator = BatchIterator( ImageReader(ENV["DATA_TARGET"]), parse(Int, ENV["BATCHES"]) )
 
     DataServer( host="0.0.0.0", port=parse(Int, ENV["DATA_PORT"]), iterator=iterator )
@@ -25,6 +33,8 @@ end
 
 
 if "training" in ARGS
+
+    include("Training.jl")
 
     model = ResNetVAE( 64 )
 
