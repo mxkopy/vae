@@ -6,12 +6,6 @@ function substitute_environment_variables( text )
 
         value = ENV[variable |> first]
 
-        println(variable)
-
-        println(variable |> first)
-
-        println(value)
-
         text = replace( text, variable.match => value )
 
     end

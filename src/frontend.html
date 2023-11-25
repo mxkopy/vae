@@ -11,9 +11,12 @@
 
         <div style="display: flex; flex-direction: column">
 
-            <div style="display: flex; flex-direction: row;">
-                <video-stream id="streamtime" height=800 width=800 host=$TRAINING_HOST port=$TRAINING_PORT></video-stream>
-            </div>
+            <video-stream id="streamtime" height=800 width=800 host=$TRAINING_HOST port=$TRAINING_PORT>
+
+                <canvas height=800 width=800></canvas>
+                <canvas height=800 width=800></canvas>
+
+            </video-stream>
 
         </div>
 
