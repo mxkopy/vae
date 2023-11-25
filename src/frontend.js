@@ -84,6 +84,8 @@ class Stream extends HTMLElement {
 
             let data = payload.slice(i, i + length + 1);
 
+            console.log(length);
+
             i += length;
 
             let ctx = this.canvases[name].getContext('2d');
