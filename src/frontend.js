@@ -61,7 +61,7 @@ class Stream extends HTMLElement {
 
     on_message( message ){
 
-        console.log(this.canvases)
+        console.log( this.canvases )
 
         let payload = new Uint8ClampedArray( message );
 
@@ -127,7 +127,7 @@ class Stream extends HTMLElement {
         // }
 
         this.ws.addEventListener( "open", console.log )
-        this.ws.addEventListener( "message", event => event.data.arrayBuffer().then( on_message ) )
+        this.ws.addEventListener( "message", event => event.data.arrayBuffer().then( this.on_message ) )
         this.ws.addEventListener( "close", console.log )
 
     }
