@@ -72,7 +72,7 @@ class Stream extends HTMLElement {
     
         let metadata = JSON.parse( metadata_string );
 
-        let i = metadata_end + 1;
+        let k = metadata_end + 1;
 
         for( const name of Object.keys(metadata) ){
 
@@ -80,9 +80,9 @@ class Stream extends HTMLElement {
 
             let length = size.reduce( (l, r) => l * r, 1 );
 
-            let data = payload.slice(i, i + length + 1);
+            let data = payload.slice(k, k + length);
 
-            i += length;
+            k += length;
 
             let ctx = this.canvases[name].getContext('2d');
 
