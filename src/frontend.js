@@ -17,9 +17,7 @@ function to_img( payload, h, w ){
 
     }
 
-    return new ImageData( pixels, h );
-
-    // return new ImageData( pixels, h, w, {colorSpace: 'display-p3'} )
+    return new ImageData( pixels, h, w, {colorSpace: 'display-p3'} )
 
 }
 
@@ -59,20 +57,16 @@ class Stream extends HTMLElement {
                 let payload  = data.slice(k+1);
     
                 const [h, w] = [ Number(size[0]), Number(size[1]) ]
-
-                console.log(sizestr, ' ', payload.length)
     
-                // let ctx      = this.canvas.getContext('2d');
-                // let img      = to_img( payload, h, w );
+                let ctx      = this.canvas.getContext('2d');
+                let img      = to_img( payload, h, w );
     
-                // ctx.clearRect( 0, 0, this.canvas.height, this.canvas.width );
-                // ctx.putImageData( img, 0, 0 );
+                ctx.clearRect( 0, 0, this.canvas.height, this.canvas.width );
+                ctx.putImageData( img, 0, 0 );
 
             })
 
         }
-
-        // this.ws.addEventListener( "message", console.log )
 
         this.ws.addEventListener( "open", console.log )
         this.ws.addEventListener( "message", on_message )
