@@ -40,7 +40,7 @@ class Stream extends HTMLElement {
 
             for( const node of mutation.addedNodes ){
 
-                if( node.nodeName == 'canvas' ){
+                if( node.nodeName == 'CANVAS' ){
 
                     this.canvases[node.getAttribute('name')] = node;
 
@@ -69,6 +69,8 @@ class Stream extends HTMLElement {
         let metadata_end = payload.findIndex( x => x == 0 );
     
         let metadata_string = new TextDecoder().decode( payload.slice(0, metadata_end) );
+
+        console.log( metadata_string.length )
     
         let metadata = JSON.parse( metadata_string );
 
