@@ -40,28 +40,15 @@ function visualizer( model::ResNetVAE )
 
     return function( x::AbstractArray, y::AbstractArray )
 
-        input  = process(x)
-        output = process(y)
+        x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
+        y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")
 
-        metadata = Dict(
+        x_bits = process(x)
+        y_bits = process(y)
 
-            "input"  => Dict(
-                "height"   => size(x, 1),
-                "width"    => size(x, 2),
-                "size"     => sizeof(input),
-                "position" => 0
-            ),
+        images = [(bits=x_bits, info=x_info), (bits=y_bits, info=y_info)]
 
-            "output" => Dict(
-                "height"   => size(y, 1),
-                "width"    => size(y, 2),
-                "size"     => sizeof(output), 
-                "position" => 1
-            )
-
-        ) |> JSON.json |> Vector{UInt8}
-
-        message = vcat( metadata, [0], input, output )
+        message  = to_message( images )
 
         put!( channel, message )
 

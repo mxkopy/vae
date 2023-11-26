@@ -10,17 +10,52 @@ function Base.iterate( channel::Channel, state=nothing )
 
 end
 
-function to_message( object, info::AbstractDict=Dict() )
+function add_info( array::AbstractArray, kwargs... )
 
-    payload    = reinterpret(UInt8, object)
+    return Dict(
 
-    basic_info = Dict( :size => sizeof(object) )
+        size   => size(array),
+        sizeof => sizeof(array),
+        eltype => eltype(array),
+        kwargs...
 
-    info       = merge( basic_info, info )
+    )
 
-    metadata   = info |> JSON.json |> Vector{UInt8}
+end
 
-    return vcat( metadata, [0], payload )
+function to_message( objects::Vector{NamedTuple{(:info, :bits), Tuple{Dict{Any, Any}, Vector{UInt8}}}} )
+
+    metadata_array = []
+
+    offset = 0
+
+    for object in objects
+
+        info  = Dict( "info" => object.info )
+
+        metadata = Dict(
+
+            "range" => Dict( 
+                "start" => offset, 
+                "end" => offset + sizeof(object.bits) 
+            ),
+    
+            "info" => object.info
+        )
+
+        push(metadata_array, metadata)
+
+        offset = range["end"]
+
+    end
+
+    metadata = metadata_array |> JSON.json |> Vector{UInt8}
+
+    payload = mapreduce(t -> t.bits, vcat, objects)
+
+    message = vcat( metadata, [0], payload )
+
+    return message
     
 end
 

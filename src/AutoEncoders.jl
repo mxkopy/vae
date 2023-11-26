@@ -7,8 +7,35 @@ using Zygote: @ignore
 import Flux.outputsize
 import Flux.trainmode!
 
-abstract type AutoEncoder end
+abstract type AutoEncoder {
+    Precision <: Number,
+    Function
+} end
 
+macro autoencoder( T::Symbol )
+        
+    return eval(:(
+        
+        struct $T{Precision, Device} <: AutoEncoder{Precision, Device}
+
+            encoder
+            decoder
+
+            m
+            s
+
+            flow::Flow
+
+            $T{Precision, Device}( encoder, decoder, m, s, flow ) where {Precision, Device}
+            = new{Precision, Device}( encoder, decoder, m, s, flow )
+
+        end;
+
+        Flux.@functor $T (encoder, decoder, m, s, flow);
+
+    ))
+
+end
 
 function sample_gaussian( μ::T, σ::T ) where T <: Number
 
@@ -18,45 +45,22 @@ function sample_gaussian( μ::T, σ::T ) where T <: Number
 
 end
 
-
-macro autoencoder( T::Symbol )
-        
-    return eval(:( 
-        
-        struct $T <: AutoEncoder
-
-            encoder
-            decoder
-
-            μ
-            σ
-
-            flow::Flow
-
-        end;
-        
-        Flux.@functor $T (encoder, decoder, μ, σ, flow);
-
-    ))
-
-end
-
 function (model::AutoEncoder)(data::AbstractArray)
 
     # data       = @ignore convert(model, data)
 
     enc_out    = model.encoder( data )
 
-    μ          = model.μ(enc_out)
-    σ          = model.σ(enc_out)
+    m          = model.m(enc_out)
+    s          = model.s(enc_out)
 
-    z_0        = sample_gaussian.( μ, σ )
+    z_0        = sample_gaussian.( m, s )
 
     flow       = model.flow( z_0 )
 
     dec_out    = model.decoder( flow )
 
-    return (enc_out=enc_out, μ=μ, σ=σ, z_0=z_0, dec_out=dec_out)
+    return (enc_out=enc_out, m=m, s=s, z_0=z_0, dec_out=dec_out)
 
 end
 

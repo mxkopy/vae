@@ -108,12 +108,12 @@ function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=
     encoder    = make_channelwise ∘ resnet_vae_encoder(model_size)
     decoder    = resnet_vae_decoder(model_size) ∘ make_channelwise
 
-    μ          = Dense( model_size, model_size )
-    σ          = Dense( model_size, model_size, softplus )
+    m          = Dense( model_size, model_size )
+    s          = Dense( model_size, model_size, softplus )
 
     flow       = Flow( model_size, flow_length, PlanarFlow )
 
-    return ResNetVAE( encoder, decoder, μ, σ, flow )
+    return ResNetVAE( encoder, decoder, m, s, flow )
 
 end
 

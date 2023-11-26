@@ -1,16 +1,26 @@
-
-
 function from_message( message ){
 
     let metadata_end = message.findIndex( x => x == 0 );
 
-    let metadata_string = new TextDecoder().decode( message.slice(0, metadata_end) );
+    let metadata_buffer = message.slice(0, metadata_end);
 
+    let metadata_string = new TextDecoder().decode( metadata_buffer );
+    
     let metadata = JSON.parse( metadata_string );
 
-    let payload = message.slice( metadata_end + 1, metadata.size + 1 );
+    let payload  = message.slice(metadata_end + 1);
 
-    return { ...metadata, data: payload }
+    let objects = [];
+
+    for( let { range: {start, end}, info } of metadata ){
+
+        let data = payload.slice(start, end);
+
+        objects.push( {...info, data: data} );
+
+    }
+
+    return objects;
 
 }
 
