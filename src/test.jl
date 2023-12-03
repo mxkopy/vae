@@ -5,8 +5,13 @@
 
 @part struct PermuteInput{T}
 
-    layer::T
-    
+    layer::T    
+
+end
+
+function ( part::PermuteInput{T} )(inputs...)
+
+
 
 end
 

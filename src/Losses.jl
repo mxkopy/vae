@@ -1,73 +1,46 @@
 include("Visualizers.jl")
 
-###############
-#   Generic   #
-###############
+struct ReconstructionLoss{T <: AutoEncoder}
+    model::T
+end
 
+function (r::ReconstructionLoss{ResNetVAE})(x::AbstractArray, y::T) where T <: AbstractArray
+    x = @ignore interpolate_data(x, size(y)) |> T
+    return Flux.Losses.mse( x, y )
+end
 
+struct ELBOLoss{T <: AutoEncoder}
+    model::T
+end
 
-function elbo_loss( model::AutoEncoder )
-
-    return function( z_0::AbstractArray )
-
-        s = 0
-
-        for c in Base.Iterators.product( axes(z_0)[2:end]... )
-
-            s += FEB( model.flow, z_0[:, c...] )
-
-        end
-
-        return s
-
+function (elbo::ELBOLoss{ResNetVAE})(z_0::AbstractArray{P}) where P
+    s::P = 0
+    for c in Base.Iterators.product( axes(z_0)[2:end]... )
+        s += FEB( elbo.model.flow.layer, z_0[:, c...] )
     end
+    return s
+end
 
+struct Printer{T <: AutoEncoder}
+    model::T
+    format::Function
+end
+
+Printer(model::ResNetVAE) = Printer(model, (r_loss::Number, e_loss::Number) -> "\nr_loss $(string(r_loss)[1:8]) -elbo $(string(e_loss)[1:8])" )
+
+@eval function (printer::Printer)( losses... )
+    printer.format(losses...) |> print
+    flush(stdout)
 end
 
 
+function create_loss_function( model::ResNetVAE )
 
-function visualize_loss( model::AutoEncoder, kwargs... )
-
-    visualize = visualizer( model, kwargs... )
-
-    return function ( data... )
-
-        @async visualize( data... )
-
-    end
-
-end
-
-
-
-function print_loss( format::String="\nr_loss %.5e -elbo %.5e" )
-
-    @eval return function( losses... )
-
-        @printf $format losses...
-
-        flush(stdout)
-
-    end
-
-end
-
-
-
-function create_loss_function( model::AutoEncoder )
-
-    E, R, V, P = (
-
-        elbo_loss( model ),
-        reconstruction_loss( model ),
-        visualize_loss( model ),
-        print_loss("\nr_loss %.5e -elbo %.5e")
-
-    )
+    E, R, V, P = ELBOLoss(model), ReconstructionLoss(model), Visualizer(model), Printer(model)
 
     return function ( x::AbstractArray )
 
-        e, μ, σ, z_0, y = model(x)
+        e, μ, σ, z_0, f, y = model(x)
 
         e = E(z_0)
 
@@ -83,11 +56,6 @@ function create_loss_function( model::AutoEncoder )
 
 end
 
-
-#################
-#   ResNetVAE   #
-#################
-
 function interpolate_data(data::AbstractArray, out_size::Tuple)
 
     mode = map( o -> o == 1 ? NoInterp() : BSpline(Linear()), out_size )
@@ -97,17 +65,5 @@ function interpolate_data(data::AbstractArray, out_size::Tuple)
     itp  = interpolate(data, mode)
 
     return itp( axes... )
-
-end
-
-function reconstruction_loss( model::ResNetVAE )
-
-    return function ( x::AbstractArray, y::AbstractArray )
-
-        x = @ignore convert(model, interpolate_data(x, y |> size))
-
-        return Flux.Losses.mse( x, y )
-
-    end
 
 end

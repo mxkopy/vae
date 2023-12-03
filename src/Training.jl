@@ -5,15 +5,15 @@ include("Losses.jl")
 using Printf, Interpolations, CUDA, Serialization, FileIO, HTTP, HTTP.WebSockets, Flux.Optimise, BSON
 using HTTP.WebSockets: isclosed
 
-struct Trainer{Model}
+struct Trainer
 
-    model::Model
+    model::AutoEncoder
     optimizer::Flux.Optimise.AbstractOptimiser
     loss::Function
 
 end
 
-function (state::Trainer{ResNetVAE})(data::AbstractArray)
+function (state::Trainer)(data::AbstractArray)
 
     ps = Flux.params( state.model )
 
@@ -43,9 +43,7 @@ Flux.cpu( state::Trainer ) = Trainer( state.model |> cpu, state.optimizer |> cpu
 Flux.gpu( state::Trainer ) = Trainer( state.model |> gpu, state.optimizer |> gpu, state.loss )
 
 function save( save_path::String, model::AutoEncoder, optimizer::Flux.Optimise.AbstractOptimiser )
-
     serialize(save_path,  Dict("model" => model |> cpu, "optimizer" => optimizer |> cpu))
     GC.gc(true)
     CUDA.functional() && CUDA.reclaim()
-
 end

@@ -1,9 +1,9 @@
-using Flux, Serialization, Interpolations, WAV, Zygote, Distributions, CUDA, Images, Printf
+using Flux, Serialization, Interpolations, WAV, Distributions, CUDA, Images, Printf
 
-using Zygote: @ignore
+using Flux.ChainRulesCore: @ignore_derivatives as @ignore
 
-unit_normalize   = x -> x #x -> x * 2f0 - 1f0
-unit_denormalize = hardtanh ∘ relu  #x -> 5f-1 * tanh(x) + 5f-1
+unit_normalize   = x -> x 
+unit_denormalize = hardtanh ∘ relu
 
 activation       = tanh
 
@@ -97,23 +97,25 @@ function resnet_vae_decoder( model_size )
 
 end
 
-
-
-@autoencoder ResNetVAE
+@register struct ResNetVAE <: AutoEncoder
+    encoder
+    decoder
+    μ
+    σ
+    flow
+    # ResNetVAE(args...; precision=Float32, device=gpu) = new( (args .|> Device{precision, device})... )
+end
 
 function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=Float32, device=gpu )
 
-    make_channelwise = x -> permutedims(x, (3, 2, 1, 4))
+    encoder    = resnet_vae_encoder(model_size) |> device # |> PermuteOutput(3, 1, 2, 4)
+    decoder    = resnet_vae_decoder(model_size) |> device# |> PermuteInput(2, 3, 1, 4)
 
-    encoder    = make_channelwise ∘ resnet_vae_encoder(model_size)
-    decoder    = resnet_vae_decoder(model_size) ∘ make_channelwise
+    μ          = Dense( model_size, model_size ) |> device
+    σ          = Dense( model_size, model_size, softplus ) |> device
 
-    m          = Dense( model_size, model_size )
-    s          = Dense( model_size, model_size, softplus )
+    flow       = Flow( model_size, flow_length, PlanarFlow ) |> device
 
-    flow       = Flow( model_size, flow_length, PlanarFlow )
-
-    return ResNetVAE( encoder, decoder, m, s, flow )
+    return ResNetVAE(encoder, decoder, μ, σ, flow)
 
 end
-

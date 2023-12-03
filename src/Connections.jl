@@ -10,7 +10,7 @@ function Base.iterate( channel::Channel, state=nothing )
 
 end
 
-function add_info( array::AbstractArray, kwargs... )
+function add_info( array::AbstractArray; kwargs... )
 
     return Dict(
 
@@ -20,6 +20,33 @@ function add_info( array::AbstractArray, kwargs... )
         kwargs...
 
     )
+
+end
+
+function process_raw_image( x::AbstractArray )
+
+    x = permutedims(x, (3, 2, 1, 4))
+
+    x = colorview(RGB, x) .|> RGBA{N0f8}
+
+    x = channelview(x)
+
+    x = reinterpret(UInt8, x)
+
+    # 3 2 1 x
+    # 2 3 1 x
+    # 3 1 2 x
+    # 1 3 2 ?
+    # 1 2 3 - 
+    # 2 1 3
+
+    x = permutedims(x, (1, 3, 2, 4))
+
+    x = reshape(x, length(x))
+
+    x = Vector{UInt8}(x)
+
+    return x
 
 end
 
@@ -43,9 +70,9 @@ function to_message( objects::Vector{NamedTuple{(:info, :bits), Tuple{Dict{Any, 
             "info" => object.info
         )
 
-        push(metadata_array, metadata)
+        push!(metadata_array, metadata)
 
-        offset = range["end"]
+        offset += sizeof(object.bits)
 
     end
 

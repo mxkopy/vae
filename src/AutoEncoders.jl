@@ -1,41 +1,112 @@
-include("Flows.jl")
+include("Util.jl")
 
-using Flux, CUDA, Serialization, Distributions, SpecialFunctions, Printf
-
-using Zygote: @ignore
+using Flux, Distributions, LinearAlgebra, CUDA, Serialization, SpecialFunctions, Printf
+using Flux: gradient
+using Flux.ChainRulesCore: @ignore_derivatives as @ignore
 
 import Flux.outputsize
 import Flux.trainmode!
 
-abstract type AutoEncoder {
-    Precision <: Number,
-    Function
-} end
+# VARIATIONAL FLOWS
 
-macro autoencoder( T::Symbol )
-        
-    return eval(:(
-        
-        struct $T{Precision, Device} <: AutoEncoder{Precision, Device}
+default_init = (x...) -> rand(Uniform(-1f-2, 1f-2), x...)
 
-            encoder
-            decoder
+abstract type Transform end
 
-            m
-            s
+struct PlanarFlow <: Transform
+    w::AbstractArray
+    u::AbstractArray
+    b::Number
+    h::Function
+end
 
-            flow::Flow
+function PlanarFlow( dimensions::Int, init::Function=default_init, h::Function=tanh )
+    return PlanarFlow( init(dimensions), init(dimensions), init(1)..., h )
+end
 
-            $T{Precision, Device}( encoder, decoder, m, s, flow ) where {Precision, Device}
-            = new{Precision, Device}( encoder, decoder, m, s, flow )
+function (t::PlanarFlow)( z::AbstractVector{P} )::AbstractVector{P} where P <: Number
+    return z + t.u * t.h( t.w ⋅ z + t.b )
+end
 
-        end;
+function ψ(t::PlanarFlow, z::AbstractVector{P}) where P <: Number
+    g = gradient( t.h, (t.w ⋅ z + t.b) )[1]
+    return g * t.w
+end
 
-        Flux.@functor $T (encoder, decoder, m, s, flow);
+Flux.@functor PlanarFlow (w, u, b, h);
 
-    ))
+struct Flow
+    transforms::Vector{Transform}
+end
+
+function Flow( dimensions::Int, length::Int, FlowType::DataType; init::Function=default_init, h::Function=tanh )
+    return Flow( [ FlowType( dimensions, init, h ) for _ in 1:length ] )
+end
+
+function ( flow::Flow )( z_0::AbstractVector{P} )::AbstractArray{P} where P <: Number
+    z = z_0
+    for f in flow.transforms
+        z = f(z)
+    end
+    return z
+end
+
+function (flow::Flow)(z_0::AbstractArray)
+    s = size(z_0)
+    z = reshape( z_0, s[1], reduce(*, s[2:end] ) )
+    h = [ z[:, i] for i in 1:s[2] ]
+    f = flow.( h )
+    y = hcat( f... )
+    return reshape(y, s...)
+end
+
+
+Flux.@functor Flow (transforms, );
+
+# TODO: implement non-log version for precision 
+function log_pdf( flow::Flow, q_0::AbstractVector{P}, z_0::AbstractVector{P} ) where P <: Number
+    z = z_0
+    s = 0
+    for t in flow.transforms
+        s += log( 1 + t.u ⋅ ψ(t, z) )
+        z = t(z)
+    end
+    return log.( q_0 ) .- s
+end
+
+
+# Free-Energy Bound
+function FEB( flow::Flow, z_0::AbstractVector )
+    z = z_0
+    s = 0
+    for t in flow.transforms
+        s += log(1 + t.u ⋅ ψ(t, z))
+        z = t(z)
+    end
+    return -s
+end
+
+function FEB( flow::Flow, q_0::AbstractArray{P}, z_0::AbstractArray{P} ) where P <: Number 
+
+    Q = Base.Iterators.product( axes(q_0)[2:end]... )    
+    Z = Base.Iterators.product( axes(z_0)[2:end]... )
+
+    E = mapreduce( (l, r) -> hcat(l, r), Q, Z ) do q, z
+
+        return FEB( flow, q_0[:, q...], z_0[:, z...] )
+
+    end
+
+    return reshape(E, size(q_0))
 
 end
+
+
+
+
+# AUTOENCODERS
+
+abstract type AutoEncoder end
 
 function sample_gaussian( μ::T, σ::T ) where T <: Number
 
@@ -47,35 +118,22 @@ end
 
 function (model::AutoEncoder)(data::AbstractArray)
 
-    # data       = @ignore convert(model, data)
+    E          = model.encoder(data)
+    E          = permutedims(E, (3, 1, 2, 4))
+    M          = model.μ(E)
+    S          = model.σ(E)
+    Z          = sample_gaussian.(M, S)
+    F          = model.flow(Z)
+    F          = permutedims(F, (2, 3, 1, 4))
+    Y          = model.decoder(F)
 
-    enc_out    = model.encoder( data )
-
-    m          = model.m(enc_out)
-    s          = model.s(enc_out)
-
-    z_0        = sample_gaussian.( m, s )
-
-    flow       = model.flow( z_0 )
-
-    dec_out    = model.decoder( flow )
-
-    return (enc_out=enc_out, m=m, s=s, z_0=z_0, dec_out=dec_out)
+    return (E=E, M=M, S=S, Z=Z, F=F, Y=Y)
 
 end
 
-
-Flux.gpu(x::AutoEncoder) = fmap(gpu, x)
-Flux.cpu(x::AutoEncoder) = fmap(cpu, x)
-
-convert(T::DataType, model::AutoEncoder)                   = fmap( x -> x isa AbstractArray ? T.(x) : x, model )
-convert(model::AutoEncoder, x::AbstractArray)              = x .|> eltype( Flux.params(model) |> first )
-convert(model::Union{AutoEncoder, Flux.Optimise.AbstractOptimiser}; precision=Float32, device=gpu) = convert(precision, model) |> device
-
-
 struct NoNaN <: Flux.Optimise.AbstractOptimiser end
 
-function Flux.Optimise.apply!(o::NoNaN, x, Δ::AbstractArray{T}) where T
+function Flux.Optimise.apply!(o::NoNaN, x, Δ::AbstractArray{T}) where T <: Number
 
     sanitize(δ)::T = isnan(δ) || isinf(δ) ? T(0) : δ
 

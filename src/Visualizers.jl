@@ -3,55 +3,32 @@ include("ResNet.jl")
 
 using JSON
 
-function process( x::AbstractArray )
-
-    x = permutedims(x, (3, 2, 1, 4))
-
-    x = colorview(RGB, x) .|> RGBA{N0f8}
-
-    x = channelview(x)
-
-    x = reinterpret(UInt8, x)
-
-    # 3 2 1 x
-    # 2 3 1 x
-    # 3 1 2 x
-    # 1 3 2 ?
-    # 1 2 3 - 
-    # 2 1 3
-
-    x = permutedims(x, (1, 3, 2, 4))
-
-    x = reshape(x, length(x))
-
-    x = Vector{UInt8}(x)
-
-    return x
-
+struct Visualizer{Model}
+    model::Model
+    channel::Channel{Vector{UInt8}}
 end
 
-
-
-function visualizer( model::ResNetVAE )
-
+function Visualizer(model::AutoEncoder; port=parse(Int, ENV["TRAINING_PORT"]))
     channel = Channel{Vector{UInt8}}()
+    @async WSServer(channel, port=port)
+    return Visualizer(model, channel)
+end
 
-    @async WSServer( channel, port=parse(Int, ENV["TRAINING_PORT"]) )
+function (visualizer::Visualizer{ResNetVAE})(x::AbstractArray, y::AbstractArray)
 
-    return function( x::AbstractArray, y::AbstractArray )
+    x = x |> cpu
+    y = y |> cpu
+    
+    x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
+    y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")
 
-        x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
-        y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")
+    x_bits = process_raw_image(x)
+    y_bits = process_raw_image(y)
 
-        x_bits = process(x)
-        y_bits = process(y)
+    images = [(info=x_info, bits=x_bits), (info=y_info, bits=y_bits)]
 
-        images = [(bits=x_bits, info=x_info), (bits=y_bits, info=y_info)]
+    message  = to_message( images )
 
-        message  = to_message( images )
-
-        put!( channel, message )
-
-    end
+    # put!( visualizer.channel, message )
 
 end

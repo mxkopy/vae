@@ -28,19 +28,17 @@ end
 
 if "training" in ARGS
 
-    model = ResNetVAE( 64 )
-
-    convert( Float32, model )
+    model = ResNetVAE( 64, precision=Float32, device=gpu )
 
     opt  = Optimiser( ClipNorm(1f0), ADAM(1f-3), NoNaN() )
 
     loss = create_loss_function( model )
 
-    trainer = Trainer( model, opt, loss ) |> gpu
+    trainer = Trainer( model, opt, loss )
 
     for image in DataClient( host="ws://" * ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
 
-        trainer( image .|> Float32 .|> gpu )
+        trainer( image .|> Float32 |> gpu )
 
     end
     
