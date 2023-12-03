@@ -7,6 +7,9 @@ macro register( struct_declaration::Expr )
     end
     return eval(:(
         $struct_declaration;
+        function Flux.ChainRulesCore.rrule(x::$T)
+            println(x)
+        end
         Flux.@functor $T;
     ))
 end

@@ -119,12 +119,10 @@ end
 function (model::AutoEncoder)(data::AbstractArray)
 
     E          = model.encoder(data)
-    E          = permutedims(E, (3, 1, 2, 4))
     M          = model.μ(E)
     S          = model.σ(E)
     Z          = sample_gaussian.(M, S)
     F          = model.flow(Z)
-    F          = permutedims(F, (2, 3, 1, 4))
     Y          = model.decoder(F)
 
     return (E=E, M=M, S=S, Z=Z, F=F, Y=Y)
