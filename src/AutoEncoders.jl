@@ -64,7 +64,6 @@ function (flow::Flow)(z_0::AbstractArray)
     return reshape(y, s...)
 end
 
-
 Flux.@functor Flow (transforms, );
 
 # TODO: implement non-log version for precision 
