@@ -45,8 +45,7 @@ end
 
 function ( flow::Flow )( z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
 
-    s = (length(z_0), length(flow.transforms)+1)
-    z = similar(z_0, dims=s)
+    z = zeros(eltype(z_0), (length(z_0), length(flow.transforms)+1))
     z[:, 1] .= z_0
     z = Flux.Zygote.Buffer(z)
 
@@ -92,8 +91,7 @@ end
 # Free-Energy Bound
 function FEB( flow::Flow, z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
 
-    s = (length(z_0), length(flow.transforms)+1)
-    z = similar(z_0, dims=s)
+    z = zeros(eltype(z_0), (length(z_0), length(flow.transforms)+1))
     z[:, 1] .= z_0
     z = Flux.Zygote.Buffer(z)
 
