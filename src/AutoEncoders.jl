@@ -45,9 +45,9 @@ end
 
 function ( flow::Flow )( z_0::AbstractVector )
 
-    z = zeros(eltype(z_0), (length(z_0), length(flow.transforms)+1))
-    z[:, 1] .= z_0
-    z = Flux.Zygote.Buffer(z)
+    @ignore z = zeros(eltype(z_0), length(z_0), length(flow.transforms) + 1)
+    @ignore z[:, 1] = z_0
+    @ignore z = Flux.Zygote.Buffer(z)
 
     for i in 1:length(flow.transforms)
         f = flow.transforms[i]
@@ -71,10 +71,9 @@ Flux.@functor Flow (transforms, );
 # TODO: implement non-log version for precision 
 function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
 
-    s = (length(z_0), length(flow.transforms)+1)
-    z = similar(z_0, dims=s)
-    z[:, 1] .= z_0
-    z = Flux.Zygote.Buffer(z)
+    @ignore z = zeros(eltype(z_0), length(z_0), length(flow.transforms) + 1)
+    @ignore z[:, 1] = z_0
+    @ignore z = Flux.Zygote.Buffer(z)
 
     s = 0
     
@@ -91,9 +90,9 @@ end
 # Free-Energy Bound
 function FEB( flow::Flow, z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
 
-    z = zeros(eltype(z_0), (length(z_0), length(flow.transforms)+1))
-    z[:, 1] .= z_0
-    z = Flux.Zygote.Buffer(z)
+    @ignore z = zeros(eltype(z_0), length(z_0), length(flow.transforms) + 1)
+    @ignore z[:, 1] = z_0
+    @ignore z = Flux.Zygote.Buffer(z)
 
     s = 0
     
