@@ -9,7 +9,7 @@ import Flux.trainmode!
 
 # VARIATIONAL FLOWS
 
-default_init = (x...) -> rand(Uniform(-1f-2, 1f-2), x...)
+const default_init = (x...) -> rand(Uniform(-1f-2, 1f-2), x...)
 
 abstract type Transform end
 
@@ -28,7 +28,7 @@ function (t::PlanarFlow)( z::Union{Flux.Zygote.Buffer, AbstractVector} )
     return z .+ t.u * t.h( t.w ⋅ z + t.b )
 end
 
-function ψ(t::PlanarFlow, z::AbstractVector{P}) where P <: Number
+function ψ(t::PlanarFlow, z::Union{Flux.Zygote.Buffer, AbstractVector})
     g = gradient( t.h, (t.w ⋅ z + t.b) )[1]
     return g * t.w
 end
@@ -44,11 +44,18 @@ function Flow( dimensions::Int, length::Int, FlowType::DataType; init::Function=
 end
 
 function ( flow::Flow )( z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
-    z = Flux.Zygote.Buffer(z_0)
-    for f in flow.transforms
-        z .= f(z)
+
+    s = (length(z_0), length(flow.transforms)+1)
+    z = similar(z_0, dims=s)
+    z[:, 1] .= z_0
+    z = Flux.Zygote.Buffer(z)
+
+    for i in 1:length(flow.transforms) + 1
+        f = flow.transforms[i]
+        z[:, i+1] = f(z[:, i])
     end
-    return z
+
+    return z[:, end]
 end
 
 function (flow::Flow)(z_0::Union{Flux.Zygote.Buffer, AbstractArray})
@@ -64,24 +71,40 @@ Flux.@functor Flow (transforms, );
 
 # TODO: implement non-log version for precision 
 function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
-    z = z_0
+
+    s = (length(z_0), length(flow.transforms)+1)
+    z = similar(z_0, dims=s)
+    z[:, 1] .= z_0
+    z = Flux.Zygote.Buffer(z)
+
     s = 0
-    for t in flow.transforms
-        s += log( 1 + t.u ⋅ ψ(t, z) )
-        z = t(z)
+    
+    for i in 1:length(flow.transforms)
+        f = flow.transforms[i]
+        s += log( 1 + f.u ⋅ ψ(f, z[:, i]) )
+        z[:, i+1] = f(z[:, i])
     end
+
     return log.( q_0 ) .- s
 end
 
 
 # Free-Energy Bound
 function FEB( flow::Flow, z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
-    z = Flux.Zygote.Buffer(z_0)
+
+    s = (length(z_0), length(flow.transforms)+1)
+    z = similar(z_0, dims=s)
+    z[:, 1] .= z_0
+    z = Flux.Zygote.Buffer(z)
+
     s = 0
-    for t in flow.transforms
-        s += log(1 + t.u ⋅ ψ(t, z))
-        z .= t(z)
+    
+    for i in 1:length(flow.transforms)
+        f = flow.transforms[i]
+        s += log( 1 + f.u ⋅ ψ(f, z[:, i]) )
+        z[:, i+1] = f(z[:, i])
     end
+
     return -s
 end
 
