@@ -45,9 +45,8 @@ end
 
 function ( flow::Flow )( z_0::AbstractVector )
 
-    @ignore z = zeros(eltype(z_0), length(z_0), length(flow.transforms) + 1)
-    @ignore z[:, 1] = z_0
-    @ignore z = Flux.Zygote.Buffer(z)
+    z = hcat(z_0, zeros(eltype(z_0), length(z_0), length(flow.transforms)))
+    z = Flux.Zygote.Buffer(z)
 
     for i in 1:length(flow.transforms)
         f = flow.transforms[i]
