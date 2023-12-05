@@ -49,7 +49,7 @@ function ( flow::Flow )( z_0::AbstractVector )
     z[:, 1] = z_0
     z = Flux.Zygote.Buffer(z)
 
-    for i in 1:length(flow.transforms) + 1
+    for i in 1:length(flow.transforms)
         f = flow.transforms[i]
         z[:, i+1] = f(z[:, i])
     end
