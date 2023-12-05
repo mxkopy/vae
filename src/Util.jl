@@ -8,8 +8,7 @@ macro register( struct_declaration::Expr )
     return eval(:(
         $struct_declaration;
         function Flux.ChainRulesCore.rrule(x::$T, args...);
-            println(x);
-            println(args);
+            return x(args...), (y...) -> y .* Flux.gradient(x, args...)
         end;
         Flux.@functor $T;
     ))

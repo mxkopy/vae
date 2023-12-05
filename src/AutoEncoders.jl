@@ -24,8 +24,8 @@ function PlanarFlow( dimensions::Int, init::Function=default_init, h::Function=t
     return PlanarFlow( init(dimensions), init(dimensions), init(1)..., h )
 end
 
-function (t::PlanarFlow)( z::AbstractVector{P} )::AbstractVector{P} where P <: Number
-    return z + t.u * t.h( t.w ⋅ z + t.b )
+function (t::PlanarFlow)( z::Union{Flux.Zygote.Buffer, AbstractVector} )
+    return z .+ t.u * t.h( t.w ⋅ z + t.b )
 end
 
 function ψ(t::PlanarFlow, z::AbstractVector{P}) where P <: Number
@@ -43,19 +43,18 @@ function Flow( dimensions::Int, length::Int, FlowType::DataType; init::Function=
     return Flow( [ FlowType( dimensions, init, h ) for _ in 1:length ] )
 end
 
-function ( flow::Flow )( z_0::AbstractVector{P} )::AbstractArray{P} where P <: Number
-    z = z_0
+function ( flow::Flow )( z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
+    z = Flux.Zygote.Buffer(z_0)
     for f in flow.transforms
-        z = f(z)
+        z .= f(z)
     end
     return z
 end
 
-function (flow::Flow)(z_0::AbstractArray)
+function (flow::Flow)(z_0::Union{Flux.Zygote.Buffer, AbstractArray})
     s = size(z_0)
     z = reshape( z_0, s[1], reduce(*, s[2:end] ) )
-    h = [ z[:, i] for i in 1:s[2] ]
-    f = flow.( h )
+    f = flow.( z[:, i] for i in 1:size(z, 2) )
     y = hcat( f... )
     return reshape(y, s...)
 end
@@ -64,7 +63,7 @@ end
 Flux.@functor Flow (transforms, );
 
 # TODO: implement non-log version for precision 
-function log_pdf( flow::Flow, q_0::AbstractVector{P}, z_0::AbstractVector{P} ) where P <: Number
+function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
     z = z_0
     s = 0
     for t in flow.transforms
@@ -76,12 +75,12 @@ end
 
 
 # Free-Energy Bound
-function FEB( flow::Flow, z_0::AbstractVector )
-    z = z_0
+function FEB( flow::Flow, z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
+    z = Flux.Zygote.Buffer(z_0)
     s = 0
     for t in flow.transforms
         s += log(1 + t.u ⋅ ψ(t, z))
-        z = t(z)
+        z .= t(z)
     end
     return -s
 end
