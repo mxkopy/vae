@@ -46,7 +46,7 @@ end
 function ( flow::Flow )( z_0::AbstractVector )
 
     z = zeros(eltype(z_0), (length(z_0), length(flow.transforms)+1))
-    z[:, 1] = z_0
+    z[:, 1] .= z_0
     z = Flux.Zygote.Buffer(z)
 
     for i in 1:length(flow.transforms)
@@ -73,7 +73,7 @@ function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
 
     s = (length(z_0), length(flow.transforms)+1)
     z = similar(z_0, dims=s)
-    z[:, 1] = z_0
+    z[:, 1] .= z_0
     z = Flux.Zygote.Buffer(z)
 
     s = 0
