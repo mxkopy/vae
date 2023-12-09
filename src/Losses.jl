@@ -26,7 +26,7 @@ struct Printer{T <: AutoEncoder}
     format::Function
 end
 
-Printer(model::ResNetVAE) = Printer(model, (r_loss::Number, e_loss::Number) -> "\nr_loss $(string(r_loss)[1:6]) -elbo $(string(e_loss)[1:6])" )
+Printer(model::ResNetVAE) = Printer(model, (r_loss::Number, e_loss::Number) -> "\nr_loss $(string(r_loss)) -elbo $(string(e_loss))" )
 
 @eval function (printer::Printer)( losses... )
     printer.format(losses...) |> print
