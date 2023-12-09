@@ -1,7 +1,5 @@
-using FileIO, VideoIO, Images, ImageTransformations, Colors, WAV, CUDA, Statistics, Random, LibSndFile, HTTP, HTTP.WebSockets, Serialization
+using FileIO, Images, Images.ImageTransformations, Colors, WAV, CUDA, Flux.Statistics, Random, LibSndFile, HTTP, HTTP.WebSockets, Serialization
 using HTTP.WebSockets: isclosed
-
-
 
 abstract type FileReader end;
 

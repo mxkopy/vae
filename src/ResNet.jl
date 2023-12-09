@@ -23,15 +23,7 @@ end
 
 function channelwise_dense( channels; init=Flux.identity_init )
 
-    return Chain(
-
-        A -> permutedims(A, (3, 2, 1, 4)), 
-
-        Dense( channels..., init=init ), 
-
-        A -> permutedims(A, (3, 2, 1, 4))
-
-    )
+    return Dense( channels..., init=init ) |> PermuteInput(3, 1, 2, 4) |> PermuteOutput(2, 3, 1, 4)
 
 end
 
@@ -63,7 +55,6 @@ end
 
 encoder_block( channels ) = ( downsampler( channels ), channelwise_dense( first(channels) + last(channels) => last(channels) ) )
 decoder_block( channels ) = (   upsampler( channels ), channelwise_dense( first(channels) + last(channels) => last(channels) ) )
-
 
 function resnet_vae_encoder( model_size )
 
@@ -103,10 +94,10 @@ end
     μ
     σ
     flow
-    ResNetVAE(args...; precision=Float32, device=gpu) = new( (args .|> Device{precision, device})... )
+    ResNetVAE(args...; precision=Float32, device=cpu) = new( (args .|> Device{precision, device})... )
 end
 
-function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=Float32, device=gpu )
+function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=Float32, device=cpu )
 
     encoder    = resnet_vae_encoder(model_size) |> PermuteOutput(3, 1, 2, 4)
     decoder    = resnet_vae_decoder(model_size) |> PermuteInput(2, 3, 1, 4)

@@ -9,19 +9,17 @@ import Flux.trainmode!
 
 # VARIATIONAL FLOWS
 
-const default_init = (x...) -> rand(Uniform(-1f-2, 1f-2), x...)
-
 abstract type Transform end
 
-struct PlanarFlow <: Transform
+@register struct PlanarFlow <: Transform
     w::AbstractArray
     u::AbstractArray
     b::Number
     h::Function
 end
 
-function PlanarFlow( dimensions::Int, init::Function=default_init, h::Function=tanh )
-    return PlanarFlow( init(dimensions), init(dimensions), init(1)..., h )
+function PlanarFlow( dimensions::Int, h::Function=tanh )
+    return PlanarFlow( zeros(Float32, dimensions), ones(Float32, dimensions), zeros(Float32, 1)..., h )
 end
 
 function (t::PlanarFlow)( z::AbstractVector )
@@ -35,22 +33,29 @@ end
 
 Flux.@functor PlanarFlow (w, u, b, h);
 
-struct Flow
+@register struct Flow
     transforms::Vector{Transform}
 end
 
-function Flow( dimensions::Int, length::Int, FlowType::DataType; init::Function=default_init, h::Function=tanh )
-    return Flow( [ FlowType( dimensions, init, h ) for _ in 1:length ] )
+function Flow( dimensions::Int, length::Int, FlowType::DataType; h::Function=tanh )
+    return Flow( [ FlowType( dimensions, h ) for _ in 1:length ] )
 end
 
-function ( flow::Flow )( z_0::AbstractVector )
+import Base.eachrow
+function Base.eachrow(x::Flux.Zygote.Buffer{Float32, Matrix{Float32}})
 
-    z = hcat(z_0, zeros(eltype(z_0), length(z_0), length(flow.transforms)))
-    z = Flux.Zygote.Buffer(z)
+    return Iterators.map( Iterators.product( axes(x)[2:end]... ) ) do i
+
+        return x[:, i...]
+
+    end
+end
+
+function (flow::Flow)(z::AbstractVector)
 
     for i in 1:length(flow.transforms)
         f = flow.transforms[i]
-        z[:, i+1] = f(z[:, i])
+        z = hcat(z, f(z[:, end]))
     end
 
     return z[:, end]
@@ -70,7 +75,6 @@ Flux.@functor Flow (transforms, );
 function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
 
     z = hcat(z_0, zeros(eltype(z_0), length(z_0), length(flow.transforms)))
-    z = Flux.Zygote.Buffer(z)
 
     s = 0
     
@@ -81,43 +85,23 @@ function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
     end
 
     return log.( q_0 ) .- s
+
 end
 
 
 # Free-Energy Bound
-function FEB( flow::Flow, z_0::Union{Flux.Zygote.Buffer, AbstractVector} )
-
-    z = hcat(z_0, zeros(eltype(z_0), length(z_0), length(flow.transforms)))
-    z = Flux.Zygote.Buffer(z)
+function FEB( flow::Flow, z::Union{Flux.Zygote.Buffer, AbstractVector} )
 
     s = 0
     
     for i in 1:length(flow.transforms)
         f = flow.transforms[i]
         s += log( 1 + f.u ⋅ ψ(f, z[:, i]) )
-        z[:, i+1] = f(z[:, i])
+        z = hcat( z, f(z[:, end]) )
     end
 
     return -s
 end
-
-function FEB( flow::Flow, q_0::AbstractArray{P}, z_0::AbstractArray{P} ) where P <: Number 
-
-    Q = Base.Iterators.product( axes(q_0)[2:end]... )    
-    Z = Base.Iterators.product( axes(z_0)[2:end]... )
-
-    E = mapreduce( (l, r) -> hcat(l, r), Q, Z ) do q, z
-
-        return FEB( flow, q_0[:, q...], z_0[:, z...] )
-
-    end
-
-    return reshape(E, size(q_0))
-
-end
-
-
-
 
 # AUTOENCODERS
 
@@ -125,7 +109,7 @@ abstract type AutoEncoder end
 
 function sample_gaussian( μ::T, σ::T ) where T <: Number
 
-    ϵ = @ignore rand( Normal(T(0), T(1)) )
+    ϵ = rand( Normal(T(0), T(1)) )
 
     return μ + σ * ϵ
 

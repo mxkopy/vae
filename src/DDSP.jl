@@ -1,6 +1,6 @@
 include("SomeMacros.jl")
 
-using Flux, NNlib, FFTW, SliceMap, CUDA, Plots, Printf
+using Flux, Flux.NNlib, FFTW, SliceMap, CUDA, Plots, Printf
 
 unit_normalize   = x -> x #x -> (x / 2f0) + 5f-1
 unit_denormalize = hardtanh #x -> (x * 2f0) - 1f0
