@@ -5,7 +5,7 @@ struct ReconstructionLoss{T <: AutoEncoder}
 end
 
 function (r::ReconstructionLoss{ResNetVAE})(x::AbstractArray, y::T) where T <: AbstractArray
-    x = interpolate_data(x, size(y)) |> T
+    x = @ignore interpolate_data(x, size(y)) |> T
     return Flux.Losses.mse( x, y )
 end
 
