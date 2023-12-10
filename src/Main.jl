@@ -28,9 +28,7 @@ end
 
 if "training" in ARGS
 
-    device = gpu
-
-    model = ResNetVAE( 64, precision=Float32, device=device )
+    model = ResNetVAE( 64, precision=Float32, device=gpu )
 
     opt  = Optimiser( ClipNorm(1f0), ADAM(1f-3), NoNaN() )
 
@@ -40,7 +38,7 @@ if "training" in ARGS
 
     for image in DataClient( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
 
-        trainer( image .|> Float32 |> device )
+        trainer( image )
 
     end
     

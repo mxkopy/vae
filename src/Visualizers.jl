@@ -3,18 +3,17 @@ include("ResNet.jl")
 
 using JSON
 
-struct Visualizer{Model}
-    model::Model
+struct Visualizer
     channel::Channel{Vector{UInt8}}
 end
 
-function Visualizer(model::AutoEncoder; port=parse(Int, ENV["TRAINING_PORT"]))
+function Visualizer(; host="0.0.0.0", port=parse(Int, ENV["TRAINING_PORT"]))
     channel = Channel{Vector{UInt8}}()
     @async WSServer(channel, port=port)
-    return Visualizer(model, channel)
+    return Visualizer(channel)
 end
 
-function (visualizer::Visualizer{ResNetVAE})(x::AbstractArray, y::AbstractArray)
+function (visualizer::Visualizer)(x::AbstractArray, y::AbstractArray)
 
     x = x |> cpu
     y = y |> cpu

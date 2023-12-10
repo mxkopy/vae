@@ -36,7 +36,7 @@ end
 
 function create_loss_function( model::ResNetVAE )
 
-    E, R, V, P = ELBOLoss(model), ReconstructionLoss(model), Visualizer(model), Printer(model)
+    E, R, P, V = ELBOLoss(model), ReconstructionLoss(model), Printer(model), Visualizer()
 
     return function ( x::AbstractArray )
 
