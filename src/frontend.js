@@ -86,15 +86,15 @@ class Stream extends HTMLElement {
 
             let data = payload.slice(i, i + metadata[name].size);
 
-            console.log( data.length, metadata[name] )
-
             i += metadata[name].size;
 
             let ctx = this.canvases[name].getContext('2d');
         
-            let img = new ImageData( data, h, w, {colorSpace: 'display-p3'} );        
+            let img = new ImageData( data, h, w, {colorSpace: 'display-p3'} );
 
-            ctx.clearRect( 0, 0, this.canvases[name].height, this.canvases[name].width );
+            let canvas = this.canvases[`${name}`]
+
+            ctx.clearRect( 0, 0, canvas.height, canvas.width );
             ctx.putImageData( img, 0, 0 );
 
         }
