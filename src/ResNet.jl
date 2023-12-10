@@ -94,10 +94,10 @@ end
     μ
     σ
     flow
-    ResNetVAE(args...; precision=Float32, device=cpu) = new( (args .|> Device{precision, device})... )
+    ResNetVAE(args...; precision=Float32, device=gpu) = new( (args .|> Device{precision, device})... )
 end
 
-function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=Float32, device=cpu )
+function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=Float32, device=gpu )
 
     encoder    = resnet_vae_encoder(model_size) |> PermuteOutput(3, 1, 2, 4)
     decoder    = resnet_vae_decoder(model_size) |> PermuteInput(2, 3, 1, 4)
@@ -107,6 +107,6 @@ function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=
 
     flow       = Flow( model_size, flow_length, PlanarFlow )
 
-    return ResNetVAE(encoder, decoder, μ, σ, flow)
+    return ResNetVAE(encoder, decoder, μ, σ, flow, precision=precision, device=device)
 
 end
