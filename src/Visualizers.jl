@@ -29,6 +29,6 @@ function (visualizer::Visualizer{ResNetVAE})(x::AbstractArray, y::AbstractArray)
 
     message  = to_message( images )
 
-    # put!( visualizer.channel, message )
+    put!( visualizer.channel, message )
 
 end

@@ -1,4 +1,3 @@
-
 services:
 
   frontend:
@@ -38,19 +37,3 @@ services:
       - ${TRAINING_PORT}:${TRAINING_PORT}
     volumes:
       - ${SRC_SOURCE}:${SRC_TARGET}:shared
-
-  test:
-    build:
-      dockerfile: dockerfile
-    command: julia ${SRC_TARGET}/Main.jl test
-    env_file: .env
-    ports:
-      - ${DATA_PORT}:${DATA_PORT}
-      - ${TRAINING_PORT}:${TRAINING_PORT}
-      - ${FRONTEND_PORT}:${FRONTEND_PORT}
-    volumes:
-      - ${DATA_SOURCE}:${DATA_TARGET}:shared
-      - ${SRC_SOURCE}:${SRC_TARGET}:shared
-
-
-

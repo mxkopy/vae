@@ -86,15 +86,25 @@ function to_message( objects::Vector{NamedTuple{(:info, :bits), Tuple{Dict{Any, 
     
 end
 
+function to_message( A::Vector{T} ) where T <: AbstractArray
+
+    return map(A) do x 
+
+        return (info=add_info(x), bits=process_raw_image(x))
+
+    end
+
+end
+
 function WSClient(
     channel::Channel{Vector{UInt8}};
-    host="ws://127.0.0.1", 
-    port=ENV["DATA_PORT"]
+    host="127.0.0.1", 
+    port=parse(Int, ENV["DATA_PORT"])
 )
-    WebSockets.open( "$host:$port", verbose=true ) do websocket
+
+    WebSockets.open( "ws://$host:$port", verbose=true ) do websocket
 
         while !isclosed( websocket ) && isopen( channel )
-
             try
                 data = receive(websocket)
                 put!(channel, data)
@@ -115,8 +125,8 @@ function WSClient(
 end
 
 function DataClient(;
-    host::String="ws://127.0.0.1",
-    port::Int=ENV["DATA_PORT"]
+    host::String="127.0.0.1",
+    port::Int=parse(Int, ENV["DATA_PORT"])
 )
     channel = Channel{Vector{UInt8}}()
 
@@ -133,7 +143,7 @@ end
 function WSServer(
     channel::Channel{Vector{UInt8}};
     host::String="0.0.0.0",
-    port::Int=ENV["DATA_PORT"]
+    port::Int=parse(Int, ENV["DATA_PORT"])
 )
 
     WebSockets.listen( host, port, verbose=true ) do websocket
@@ -159,9 +169,9 @@ function WSServer(
 end
 
 function DataServer(;
-    iterator::BatchIterator=BatchIterator{ImageReader}( ENV["DATA_SOURCE"], 1 ), 
+    iterator::BatchIterator=BatchIterator{ImageReader}( ENV["DATA_TARGET"], 1 ), 
     host::String="0.0.0.0",
-    port::Int=ENV["DATA_PORT"]
+    port::Int=parse(Int, ENV["DATA_PORT"])
 )
     channel = Channel{Vector{UInt8}}()
 

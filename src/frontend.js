@@ -76,6 +76,8 @@ class Stream extends HTMLElement {
     
         let metadata = JSON.parse( metadata_string );
 
+        console.log(metadata)
+
         let i = metadata_end + 1;
 
         for( const name of Object.keys(metadata) ){
