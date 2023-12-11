@@ -15,8 +15,8 @@ end
 
 function (visualizer::Visualizer)(x::AbstractArray, y::AbstractArray)
 
-    x = x |> cpu
-    y = y |> cpu
+    # x = x |> cpu
+    # y = y |> cpu
     
     x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
     y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")

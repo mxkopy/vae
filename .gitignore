@@ -1,4 +1,3 @@
-data/*
 *.zip
 *.wav
 *.mp4
@@ -6,3 +5,4 @@ data/*
 *.bson
 *.jpeg
 *.jpg
+src/test.jl

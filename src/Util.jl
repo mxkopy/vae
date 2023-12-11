@@ -21,15 +21,17 @@ end
     end
 end
 
-function (d::Device{P, D})(x::AbstractArray{T}) where {T, P <: Number, D}
-    X = @ignore x .|> P |> D
-    return d.layer(X)
+function (d::Device)(x)
+    return d.layer(x)
 end
 
-function (d::Device{P, D})(x::T) where {T, P <: Number, D}
-    X = @ignore x |> P |> D
-    return d.layer(X)
-end
+# function (d::Device{P, D})(x::AbstractArray{T})::X where {T, P <: Number, D, X}
+#     return d.layer(x .|> P |> D)
+# end
+
+# function (d::Device{P, D})(x::T)::X where {T, P <: Number, D, X}
+#     return d.layer(x |> P |> D)
+# end
 
 @register struct PermuteInput
     permutations::NTuple{N, Int} where N

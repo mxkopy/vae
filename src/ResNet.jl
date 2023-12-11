@@ -9,15 +9,17 @@ activation       = tanh
 
 function conv_block( kernel, channels; type=Conv, σ=activation, stride=1, groups=gcd(channels...), norm_layer=true )
 
-    return Chain(
+    return type( kernel, channels, σ, stride=stride, groups=groups, pad=SamePad() )
 
-        type( kernel, channels, σ, stride=stride, groups=groups, pad=SamePad() ),
+    # return Chain(
+
+        # type( kernel, channels, σ, stride=stride, groups=groups, pad=SamePad() ),
 
         # norm_layer ? GroupNorm( last(channels), gcd(channels...) ) : x -> x
 
         # norm_layer ? BatchNorm( last(channels) ) : x -> x
 
-    )
+    # )
 
 end
 
