@@ -2,8 +2,6 @@ include("Training.jl")
 include("DataIterators.jl")
 include("Frontend.jl")
 
-
-
 if "frontend" in ARGS
 
     V = Visualizer()
