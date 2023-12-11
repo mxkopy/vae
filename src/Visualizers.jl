@@ -7,17 +7,14 @@ struct Visualizer
     channel::Channel{Vector{UInt8}}
 end
 
-function Visualizer(; host="0.0.0.0", port=parse(Int, ENV["TRAINING_PORT"]))
+function Visualizer(; host="0.0.0.0", port=parse(Int, ENV["VISUALIZER_PORT"]))
     channel = Channel{Vector{UInt8}}()
-    @async WSServer(channel, port=port)
+    @async WSServer(channel, host=host, port=port)
     return Visualizer(channel)
 end
 
 function (visualizer::Visualizer)(x::AbstractArray, y::AbstractArray)
 
-    # x = x |> cpu
-    # y = y |> cpu
-    
     x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
     y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")
 
@@ -28,6 +25,6 @@ function (visualizer::Visualizer)(x::AbstractArray, y::AbstractArray)
 
     message  = to_message( images )
 
-    @async put!( visualizer.channel, message )
+    put!( visualizer.channel, message )
 
 end

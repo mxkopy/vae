@@ -7,6 +7,7 @@ services:
     env_file: .env
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
+      - ${VISUALIZER_PORT}:${VISUALIZER_PORT}
     volumes:
       - ${SRC_SOURCE}:${SRC_TARGET}:shared
   

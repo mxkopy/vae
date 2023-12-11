@@ -21,22 +21,13 @@ function (elbo::ELBOLoss{ResNetVAE})(z_0::AbstractArray{P}) where P
     return s
 end
 
-struct Printer{T <: AutoEncoder}
-    model::T
-    format::Function
-end
-
-Printer(model::ResNetVAE) = Printer(model, (r_loss::Number, e_loss::Number) -> "\nr_loss $(string(r_loss)) -elbo $(string(e_loss))" )
-
-@eval function (printer::Printer)( losses... )
-    printer.format(losses...) |> print
-    flush(stdout)
-end
-
-
 function create_loss_function( model::ResNetVAE )
 
-    E, R, P, V = ELBOLoss(model), ReconstructionLoss(model), Printer(model), Visualizer()
+    visualizer_channel = Channel()
+
+    @async DataServer(visualizer_channel, port=parse(Int, ENV["TRAINING_PORT"]))
+
+    E, R, P, V = ELBOLoss(model), ReconstructionLoss(model), Printer(), (x, y) -> @async put!(visualizer_channel, (x |> cpu, y |> cpu))
 
     return function ( x::AbstractArray )
 
@@ -47,7 +38,6 @@ function create_loss_function( model::ResNetVAE )
         r = R(x, y)
 
         @ignore V(x, y)
-
         @ignore P(r, -e)
 
         return r + e

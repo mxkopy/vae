@@ -43,7 +43,7 @@ function process_raw_image( x::AbstractArray )
 
 end
 
-function to_message( objects::Vector{NamedTuple{(:info, :bits), Tuple{Dict{Any, Any}, Vector{UInt8}}}} )
+function to_message( objects::Vector{NamedTuple{(:info, :bits), Tuple{Dict{Any, Any}, Vector{UInt8}}}} )::Vector{UInt8}
 
     metadata_array = []
 
@@ -144,6 +144,7 @@ function WSServer(
         while !isclosed( websocket ) && isopen( channel )
 
             try
+
                 data = take!(channel)
                 send(websocket, data)
 
@@ -161,8 +162,8 @@ function WSServer(
 
 end
 
-function DataServer(;
-    iterator::BatchIterator=BatchIterator{ImageReader}( ENV["DATA_TARGET"], 1 ), 
+function DataServer(
+    iterator=BatchIterator{ImageReader}( ENV["DATA_TARGET"], 1 );
     host::String="0.0.0.0",
     port::Int=parse(Int, ENV["DATA_PORT"])
 )

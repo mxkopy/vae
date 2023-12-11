@@ -55,4 +55,13 @@ function (c::PermuteOutput)(data::AbstractArray{T, N})::AbstractArray{T, N} wher
     return permutedims(c.layer(data), c.permutations)
 end
 
+struct Printer
+    format::Function
+end
 
+Printer() = Printer((r_loss::Number, e_loss::Number) -> "\nr_loss $(string(r_loss)) -elbo $(string(e_loss))" )
+
+@eval function (printer::Printer)( losses... )
+    printer.format(losses...) |> print
+    flush(stdout)
+end
