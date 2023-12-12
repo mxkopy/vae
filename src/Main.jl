@@ -26,6 +26,8 @@ if "data" in ARGS
 
     iterator = BatchIterator( ImageReader(ENV["DATA_TARGET"]), parse(Int, ENV["BATCHES"]) )
 
+    for imgs in iterator
+
     DataServer( iterator, host="0.0.0.0", port=parse(Int, ENV["DATA_PORT"]) )
 
 end
@@ -51,4 +53,3 @@ if "training" in ARGS
     end
     
 end
-
