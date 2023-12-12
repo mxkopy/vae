@@ -19,7 +19,11 @@ abstract type Transform end
 end
 
 function PlanarFlow( dimensions::Int, h::Function=tanh )
-    return PlanarFlow( zeros(Float32, dimensions), ones(Float32, dimensions), zeros(Float32, 1)..., h )
+
+    # init = x -> rand( Normal(Float32(0), Float32(1)), x... )
+
+    # return PlanarFlow(init(dimensions), init(dimensions), init(1)..., h)
+    return PlanarFlow( zeros(Float32, dimensions), ones(Float32, dimensions), rand(Float32, 1)..., h )
 end
 
 function (t::PlanarFlow)( z::AbstractVector )

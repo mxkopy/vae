@@ -95,7 +95,7 @@ function WSClient(
     port=parse(Int, ENV["DATA_PORT"])
 )
 
-    WebSockets.open( "ws://$host:$port", verbose=true ) do websocket
+    WebSockets.open( "ws://$host:$port", verbose=true, retries=Inf ) do websocket
 
         while !isclosed( websocket ) && isopen( channel )
             try

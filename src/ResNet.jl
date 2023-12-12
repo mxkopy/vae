@@ -63,6 +63,7 @@ function resnet_vae_encoder( model_size )
     return Chain(
 
         x -> unit_normalize.(x),
+
         encoder_block( 3 => 8 )...,
         encoder_block( 8 => 16 )...,
         encoder_block( 16 => 32 )...,
