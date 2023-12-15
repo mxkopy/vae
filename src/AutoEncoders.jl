@@ -24,7 +24,7 @@ end
 
 function û(t::PlanarFlow)
     m(x) = -1 + log(1 + exp(x))
-    return t.u .+ ( m(t.u ⋅ t.w) - (t.u ⋅ t.w) ) .* (t.w / (t.w ⋅ t.w))
+    return t.u .+ ( m(t.u ⋅ t.w) - (t.u ⋅ t.w) ) .* (t.w ./ (t.w ⋅ t.w))
 end
 
 function (t::PlanarFlow)( z::AbstractVector )
