@@ -19,20 +19,20 @@ abstract type Transform end
 end
 
 function PlanarFlow( dimensions::Int, h::Function=tanh )
-    return PlanarFlow( zeros(Float32, dimensions), zeros(Float32, dimensions), Float32(0), h )
+    init = dimensions -> rand( Normal(Float32(0), Float32(1)), dimensions )
+    return PlanarFlow( dimensions |> init, dimensions |> init, init(1)..., h )
 end
 
 function û(t::PlanarFlow)
     _m = -1 + log(1 + exp(t.u ⋅ t.w))
     m  = _m - t.u ⋅ t.w
     w  = t.w ./ (t.w ⋅ t.w)
-    # return t.u .+ (m .* w)
-    return t.u
+    return t.u .+ m * w
+    # return t.u
 end
 
 function (t::PlanarFlow)( z::AbstractVector )
-    u = û(t) .* t.h( t.w ⋅ z + t.b )
-    return z .+ u
+    return z .+ û(t) .* t.h( t.w ⋅ z + t.b )
 end
 
 function ψ(t::PlanarFlow, z::AbstractVector)
