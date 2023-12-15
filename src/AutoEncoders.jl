@@ -19,11 +19,7 @@ abstract type Transform end
 end
 
 function PlanarFlow( dimensions::Int, h::Function=tanh )
-
-    # init = x -> rand( Normal(Float32(0), Float32(1)), x... )
-
-    # return PlanarFlow(init(dimensions), init(dimensions), init(1)..., h)
-    return PlanarFlow( zeros(Float32, dimensions), ones(Float32, dimensions), rand(Float32, 1)..., h )
+    return PlanarFlow( zeros(Float32, dimensions), zeros(Float32, dimensions), Float32(0), h )
 end
 
 function (t::PlanarFlow)( z::AbstractVector )
@@ -34,8 +30,6 @@ function ψ(t::PlanarFlow, z::AbstractVector)
     g = gradient( t.h, (t.w ⋅ z + t.b) )[1]
     return g * t.w
 end
-
-Flux.@functor PlanarFlow (w, u, b, h);
 
 @register struct Flow
     transforms::Vector{Transform}
@@ -120,6 +114,12 @@ function sample_gaussian( μ::T, σ::T ) where T <: Number
 end
 
 function (model::AutoEncoder)(data::AbstractArray)
+
+    @ignore mapreduce( ||, model.flow.layer.transforms ) do transform 
+
+        return transform.w ⋅ transform.u > -1
+
+    end |> println
 
     E          = model.encoder(data)
     M          = model.μ(E)

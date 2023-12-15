@@ -6,7 +6,7 @@ if "frontend" in ARGS
 
     V = Visualizer()
 
-    @async for (x, y) in DataClient(host="training", port=parse(Int, ENV["TRAINING_PORT"]))
+    @async for (x, y) in DataClient(host=ENV["TRAINING_HOST"], port=parse(Int, ENV["TRAINING_PORT"]))
 
         V(x, y)
 
