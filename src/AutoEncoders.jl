@@ -23,8 +23,9 @@ function PlanarFlow( dimensions::Int, h::Function=tanh )
 end
 
 function û(t::PlanarFlow)
-    m(x) = -1 + log(x)
-    return t.u .+ ( m(t.u ⋅ t.w) - (t.u ⋅ t.w) )
+    return t.u
+    # m(x) = -1 + log(x)
+    # return t.u .+ ( m(t.u ⋅ t.w) - (t.u ⋅ t.w) )
 end
 
 function (t::PlanarFlow)( z::AbstractVector )
