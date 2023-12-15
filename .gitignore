@@ -6,3 +6,4 @@
 *.jpeg
 *.jpg
 src/test.jl
+models

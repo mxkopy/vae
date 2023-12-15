@@ -83,7 +83,7 @@ function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
     
     for i in 1:length(flow.transforms)
         f = flow.transforms[i]
-        s += log( 1 + f.u ⋅ ψ(f, z[:, i]) )
+        s += log( 1 + û(f) ⋅ ψ(f, z[:, i]) )
         z[:, i+1] = f(z[:, i])
     end
 

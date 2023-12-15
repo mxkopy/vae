@@ -55,7 +55,7 @@ if "training" in ARGS
 
         end
 
-        trainer( image )
+        trainer( image .|> P |> D )
 
     end
     
