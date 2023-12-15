@@ -7,5 +7,4 @@ RUN julia -e 'using Pkg; Pkg.add( ["BSON", "Colors", "Distributions", "FFTW", "F
 RUN julia -e 'using CUDA; CUDA.set_runtime_version!(v"11.8")'
 RUN julia -e 'using CUDA; CUDA.precompile_runtime()'
 
-
 CMD []

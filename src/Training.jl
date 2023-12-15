@@ -2,7 +2,7 @@ include("AutoEncoders.jl")
 include("Connections.jl")
 include("Losses.jl")
 
-using Printf, Interpolations, CUDA, Serialization, FileIO, HTTP, HTTP.WebSockets, Flux.Optimise, BSON
+using Printf, Interpolations, CUDA, Serialization, FileIO, HTTP, HTTP.WebSockets, Flux.Optimise, BSON, Dates
 using HTTP.WebSockets: isclosed
 
 struct Trainer
@@ -46,4 +46,10 @@ function save( save_path::String, model::AutoEncoder, optimizer::Flux.Optimise.A
     serialize(save_path,  Dict("model" => model |> cpu, "optimizer" => optimizer |> cpu))
     GC.gc(true)
     CUDA.functional() && CUDA.reclaim()
+end
+
+function save( trainer::Trainer; save_path="/VAE/models/$(now())" )
+
+    save( save_path, trainer.model, trainer.optimizer )
+
 end

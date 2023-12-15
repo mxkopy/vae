@@ -22,8 +22,13 @@ function PlanarFlow( dimensions::Int, h::Function=tanh )
     return PlanarFlow( zeros(Float32, dimensions), zeros(Float32, dimensions), Float32(0), h )
 end
 
+function û(t::PlanarFlow)
+    m(x) = -1 + log(x)
+    return t.u + ( m(t.u ⋅ t.w) - (t.u ⋅ t.w) )
+end
+
 function (t::PlanarFlow)( z::AbstractVector )
-    return z .+ t.u * t.h( t.w ⋅ z + t.b )
+    return z .+ û(t) * t.h( t.w ⋅ z + t.b )
 end
 
 function ψ(t::PlanarFlow, z::AbstractVector)
@@ -94,7 +99,7 @@ function FEB( flow::Flow, z::Union{Flux.Zygote.Buffer, AbstractVector} )
     
     for i in 1:length(flow.transforms)
         f = flow.transforms[i]
-        s += log( 1 + f.u ⋅ ψ(f, z[:, i]) )
+        s += log( 1 + û(f) ⋅ ψ(f, z[:, i]) )
         z = hcat( z, f(z[:, end]) )
     end
 
@@ -114,12 +119,6 @@ function sample_gaussian( μ::T, σ::T ) where T <: Number
 end
 
 function (model::AutoEncoder)(data::AbstractArray)
-
-    @ignore mapreduce( ||, model.flow.layer.transforms ) do transform 
-
-        return transform.w ⋅ transform.u > -1
-
-    end |> println
 
     E          = model.encoder(data)
     M          = model.μ(E)

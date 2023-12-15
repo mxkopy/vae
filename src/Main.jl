@@ -36,6 +36,8 @@ if "training" in ARGS
 
     P, D = Float32, cpu
 
+    N = 1000
+
     model = ResNetVAE( 64, precision=P, device=D )
 
     opt  = Optimiser( ClipNorm(1f0), ADAM(1f-3), NoNaN() )
@@ -44,9 +46,16 @@ if "training" in ARGS
 
     trainer = Trainer( model, opt, loss )
 
-    for image in DataClient( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) )
+    for (n, image) in enumerate( DataClient( host=ENV["DATA_HOST"], port=parse(Int, ENV["DATA_PORT"]) ) )
 
-        trainer( image .|> P |> D )
+        if n % N == 0
+
+            save(trainer)
+            n = 1
+
+        end
+
+        trainer( image )
 
     end
     
