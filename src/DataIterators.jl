@@ -54,13 +54,7 @@ function read( reader::ImageReader, index::String )
 
     y = load(index)
 
-    y = y .|> RGB |> channelview
-
-    y = permutedims( y, (2, 3, 1) )
-
-    y = reshape( y, (size(y)..., 1) )
-
-    return y
+    return y .|> RGB
 
 end
 
@@ -117,6 +111,7 @@ struct BatchIterator{ReaderType}
 
     reader::ReaderType
     batches::Int
+    collate::Function
 
 end
 
@@ -125,9 +120,9 @@ function Base.iterate( iterator::BatchIterator, state=iterator.reader )
     if !isempty(iterator)
 
         data = Iterators.take(iterator.reader, iterator.batches)
-    
-        return reduce((l, r) -> cat(l, r, dims=4), data), iterator.reader
 
+        return iterator.collate(data |> collect), iterator.reader
+    
     end
 
     return nothing
@@ -142,7 +137,32 @@ end
 
 function BatchIterator{ImageReader}( directory::String, batches::Int )
 
-    return BatchIterator( ImageReader( directory ), batches )
+    function to_batch( image )
+
+        image = permutedims( image, (2, 3, 1) )
+
+        return reshape( image, (size(image)..., 1) )
+
+    end
+
+    function collate(images::Vector)
+
+        w = minimum(first ∘ size, images)
+        h = minimum(last  ∘ size, images)
+
+        return mapreduce( (x, y) -> cat(x, y, dims=4), images ) do image
+
+            image = imresize(image, h, w)
+
+            image = image |> channelview 
+
+            return to_batch(image)
+
+        end
+
+    end
+
+    return BatchIterator( ImageReader( directory ), batches, collate )
 
 end
 
