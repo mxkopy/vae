@@ -65,10 +65,18 @@ end
 
 function (flow::Flow)(z_0::AbstractArray)
     s = size(z_0)
-    z = reshape( z_0, s[1], reduce(*, s[2:end] ) )
-    f = flow.( z[:, i] for i in 1:size(z, 2) )
-    y = hcat( f... )
-    return reshape(y, s...)
+    # z = reshape( z_0, s[1], reduce(*, s[2:end] ) )
+    Z = [ z_0[:, i...] for i in Iterators.product(axes(z)[2:end]...) ]
+
+    for transform in flow.transforms
+
+        Z = map(transform, Z )
+
+    end
+
+    Z = reduce(hcat, Z)
+
+    return reshape(Z, s...)
 end
 
 Flux.@functor Flow (transforms, );
