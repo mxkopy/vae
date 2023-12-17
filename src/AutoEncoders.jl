@@ -59,7 +59,7 @@ end
 
 function (flow::Flow)(z::AbstractVector)
 
-    return foldr((l, r) -> l(r), flow.transforms, init=z)
+    return foldl((l, r) -> r(l), flow.transforms, init=z)
 
 end
 
@@ -94,14 +94,13 @@ end
 # Free-Energy Bound
 function FEB( flow::Flow, z::Union{Flux.Zygote.Buffer, AbstractVector} )
 
-    s = 0
+    _, s = foldl( flow.transforms, init=(z, 0) ) do l, r
 
-    foldr(flow.transforms)
-    
-    for i in 1:length(flow.transforms)
-        f = flow.transforms[i]
-        s += log( 1 + û(f) ⋅ ψ(f, z[:, i]) )
-        z = hcat( z, f(z[:, end]) )
+        z = l[1]
+        c = l[2]
+
+        return r(z), c + log( 1 + û(r) ⋅ ψ(r, z) )
+
     end
 
     return -s
