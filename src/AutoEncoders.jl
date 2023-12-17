@@ -28,7 +28,6 @@ function û(t::PlanarFlow)
     m  = _m - t.u ⋅ t.w
     w  = t.w ./ (t.w ⋅ t.w)
     return t.u .+ m * w
-    # return t.u
 end
 
 function (t::PlanarFlow)( z::AbstractVector )
@@ -60,12 +59,8 @@ end
 
 function (flow::Flow)(z::AbstractVector)
 
-    for i in 1:length(flow.transforms)
-        f = flow.transforms[i]
-        z = hcat(z, f(z[:, end]))
-    end
+    return foldr((l, r) -> l(r), flow.transforms, init=z)
 
-    return z[:, end]
 end
 
 function (flow::Flow)(z_0::AbstractArray)
@@ -100,6 +95,8 @@ end
 function FEB( flow::Flow, z::Union{Flux.Zygote.Buffer, AbstractVector} )
 
     s = 0
+
+    foldr(flow.transforms)
     
     for i in 1:length(flow.transforms)
         f = flow.transforms[i]
