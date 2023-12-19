@@ -1,41 +1,76 @@
 include("Util.jl")
 
-using Flux, Distributions, LinearAlgebra, CUDA, Serialization, SpecialFunctions, Printf
+using Flux, Flux.NNlib, Distributions, LinearAlgebra, CUDA, Serialization, SpecialFunctions, Printf
 using Flux: gradient
 using Flux.ChainRulesCore: @ignore_derivatives as @ignore
 
 import Flux.outputsize
 import Flux.trainmode!
+import LinearAlgebra: dot
 
 # VARIATIONAL FLOWS
 
 abstract type Transform end
 
 @register struct PlanarFlow <: Transform
-    w::AbstractArray
-    u::AbstractArray
-    b::Number
+    w::AbstractMatrix
+    u::AbstractMatrix
+    b::AbstractVector
     h::Function
 end
 
-function PlanarFlow( dimensions::Int, h::Function=tanh )
-    init = dimensions -> rand( Normal(Float32(0), Float32(1)), dimensions )
-    return PlanarFlow( dimensions |> init, dimensions |> init, init(1)..., h )
+function PlanarFlow( dimensions::Int, length::Int, h::Function=tanh )
+    init = (x...) -> rand( Normal(Float32(0), Float32(1)), x... )
+    w = init(dimensions, length)
+    u = init(dimensions, length)
+    b = init(length)
+    return PlanarFlow( w, u, b, h )
 end
 
 function û(t::PlanarFlow)
-    _m = -1 + log(1 + exp(t.u ⋅ t.w))
-    m  = _m - t.u ⋅ t.w
-    w  = t.w ./ (t.w ⋅ t.w)
-    return t.u .+ m * w
+
+    uw  = transpose(t.u) * t.w |> diag
+
+    ww  = transpose(t.w) * t.w |> diag
+    
+    _m = (-1 .+ log.(1 .+ exp.(uw))) .- uw
+
+    m = transpose(reduce(hcat, [_m for _ in axes(t.w, 1)]))
+
+    w = t.w ./ transpose(reduce(hcat, [ww for _ in axes(t.w, 1)]))
+
+    return t.u .+ m .* w
+
 end
 
-function (t::PlanarFlow)( z::AbstractVector )
-    return z .+ û(t) .* t.h( t.w ⋅ z + t.b )
+# t.w: (64, m)
+# z  : (64, n)
+
+
+function (t::PlanarFlow)(z::AbstractMatrix)
+
+    wz = transpose(t.w) * z
+
+    b  = reduce(hcat, [t.b for _ in axes(wz, 2)])
+
+    # wzb[i, j] = t.w[:, i] ⋅ z[:, j] .+ t.b[:, j]
+    wzb = wz .+ b
+
+    h = t.h.(wzb)
+    g = [ i for (i, ) in gradient.( t.h, wzb ) ]
+
+    # û = û(t)
+
+    # û: (64, m)
+    # h: (m, n)
+
+    # ûh[i, j] = û[i, :] ⋅ h[:, j]
+ 
+    return z .+ û(t) * h
 end
 
 function ψ(t::PlanarFlow, z::AbstractVector)
-    g = gradient( t.h, (t.w ⋅ z + t.b) )[1]
+    g, _ = gradient( t.h, (t.w ⋅ z + t.b) )
     return g * t.w
 end
 
@@ -47,25 +82,14 @@ function Flow( dimensions::Int, length::Int, FlowType::DataType; h::Function=tan
     return Flow( [ FlowType( dimensions, h ) for _ in 1:length ] )
 end
 
-import Base.eachrow
-function Base.eachrow(x::Flux.Zygote.Buffer{Float32, Matrix{Float32}})
+function (flow::Flow)(z::AbstractVector) where T
 
-    return Iterators.map( Iterators.product( axes(x)[2:end]... ) ) do i
-
-        return x[:, i...]
-
-    end
-end
-
-function (flow::Flow)(z::AbstractVector)
-
-    return foldl((l, r) -> r(l), flow.transforms, init=z)
+    return foldl((l, r) -> r(l), flow.transforms, init=reshape(z, length(z), 1))
 
 end
 
 function (flow::Flow)(z_0::AbstractArray)
     s = size(z_0)
-    # z = reshape( z_0, s[1], reduce(*, s[2:end] ) )
     Z = [ z_0[:, i...] for i in Iterators.product(axes(z)[2:end]...) ]
 
     for transform in flow.transforms
@@ -80,24 +104,6 @@ function (flow::Flow)(z_0::AbstractArray)
 end
 
 Flux.@functor Flow (transforms, );
-
-# TODO: implement non-log version for precision 
-function log_pdf( flow::Flow, q_0::AbstractVector, z_0::AbstractVector )
-
-    z = hcat(z_0, zeros(eltype(z_0), length(z_0), length(flow.transforms)))
-
-    s = 0
-    
-    for i in 1:length(flow.transforms)
-        f = flow.transforms[i]
-        s += log( 1 + û(f) ⋅ ψ(f, z[:, i]) )
-        z[:, i+1] = f(z[:, i])
-    end
-
-    return log.( q_0 ) .- s
-
-end
-
 
 # Free-Energy Bound
 function FEB( flow::Flow, z::Union{Flux.Zygote.Buffer, AbstractVector} )
