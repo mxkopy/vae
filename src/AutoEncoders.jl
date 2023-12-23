@@ -46,27 +46,22 @@ end
 # t.w: (64, m)
 # z  : (64, n)
 
-
 function (t::PlanarFlow)(z::AbstractMatrix)
 
-    wz = transpose(t.w) * z
+    u = û(t)
 
-    b  = reduce(hcat, [t.b for _ in axes(wz, 2)])
+    for i in axes(z, 2)
 
-    # wzb[i, j] = t.w[:, i] ⋅ z[:, j] .+ t.b[:, j]
-    wzb = wz .+ b
+        for k in axes(u, 2)
 
-    h = t.h.(wzb)
-    g = [ i for (i, ) in gradient.( t.h, wzb ) ]
+            z[:, i] += u[:, k] .* t.h(t.w[:, k] ⋅ z[:, i])
+        
+        end
 
-    # û = û(t)
+    end
 
-    # û: (64, m)
-    # h: (m, n)
-
-    # ûh[i, j] = û[i, :] ⋅ h[:, j]
- 
-    return z .+ û(t) * h
+    return z
+    
 end
 
 function ψ(t::PlanarFlow, z::AbstractVector)
