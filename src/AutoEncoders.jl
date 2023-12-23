@@ -13,52 +13,47 @@ import LinearAlgebra: dot
 abstract type Transform end
 
 @register struct PlanarFlow <: Transform
-    w::AbstractMatrix
-    u::AbstractMatrix
-    b::AbstractVector
+    w::AbstractVector
+    u::AbstractVector
+    b::Number
     h::Function
 end
 
-function PlanarFlow( dimensions::Int, length::Int, h::Function=tanh )
+function PlanarFlow( dimensions::Int, h::Function=tanh )
     init = (x...) -> rand( Normal(Float32(0), Float32(1)), x... )
-    w = init(dimensions, length)
-    u = init(dimensions, length)
-    b = init(length)
+    w = init(dimensions)
+    u = init(dimensions)
+    b = init(1) |> first
     return PlanarFlow( w, u, b, h )
 end
 
-function û(t::PlanarFlow)
+function u_hat(w::T, u::T, û::T) where {T <: AbstractVector}
 
-    uw  = transpose(t.u) * t.w |> diag
+    û .= u .+ ( (-1 + log( 1 + exp(u ⋅ w))) + u ⋅ w ) .* (w ./ (w ⋅ w))
 
-    ww  = transpose(t.w) * t.w |> diag
-    
-    _m = (-1 .+ log.(1 .+ exp.(uw))) .- uw
-
-    m = transpose(reduce(hcat, [_m for _ in axes(t.w, 1)]))
-
-    w = t.w ./ transpose(reduce(hcat, [ww for _ in axes(t.w, 1)]))
-
-    return t.u .+ m .* w
+    return nothing
 
 end
 
-# t.w: (64, m)
-# z  : (64, n)
-
-function (t::PlanarFlow)(z::AbstractMatrix)
-
-    u = û(t)
+function run_flow(w::T, u::T, b::N, h::F, z::A) where {T <: AbstractVector, N <: Number, F <: Function, A <: AbstractMatrix}
 
     for i in axes(z, 2)
 
-        for k in axes(u, 2)
-
-            z[:, i] += u[:, k] .* t.h(t.w[:, k] ⋅ z[:, i])
-        
-        end
+        @inbounds z[:, i] .+= u #.* h(w .* z[:, i] |> sum)
 
     end
+
+    return nothing
+
+end
+
+function (t::PlanarFlow)(z::AbstractMatrix)
+
+    û = similar(t.u)
+
+    @cuda u_hat(t.w, t.u, û)
+
+    @cuda run_flow(t.w, t.u, t.b, t.h, z)
 
     return z
     
