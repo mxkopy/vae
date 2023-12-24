@@ -37,11 +37,32 @@ end
 
 function run_flow(w::T, u::T, b::N, h::F, z::A) where {T <: AbstractVector, N <: Number, F <: Function, A <: AbstractMatrix}
 
-    for i in axes(z, 2)
+    x, y     = threadIdx().x, threadIdx().y
+    x_s, y_s = blockDim().x, blockDim().y
 
-        @inbounds z[:, i] .+= u #.* h(w .* z[:, i] |> sum)
+    for i = x:x_s:size(z, 1)
+
+        wz = 0
+
+        for k = y:y_s:length(w)
+
+            wz += w[k] * z[k, i]
+
+        end
+
+        for k = y:y_s:size(y, 2)
+
+            z[i, k] += u[k] * h(wz)
+
+        end
 
     end
+
+    # for i in axes(z, 2)
+
+    #     @inbounds z[:, i] .+= u .* h(w .* z[:, i] |> sum)
+
+    # end
 
     return nothing
 
