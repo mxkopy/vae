@@ -100,7 +100,7 @@ class Stream extends HTMLElement {
         this.ws = new WebSocket( `ws://${host}:${port}` );
 
         this.ws.addEventListener( "open", console.log )
-        this.ws.addEventListener( "message", event => this.on_message(event) )
+        this.ws.addEventListener( "message", this.on_message )
         this.ws.addEventListener( "close", console.log )
 
     }

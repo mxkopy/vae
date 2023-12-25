@@ -21,12 +21,8 @@ abstract type Transform end
 end
 
 function PlanarFlow( dimensions::Int, h::Function=tanh )
-    # init = (x...) -> rand( Normal(Float32(0), Float32(1)), x... )
-    # w = init(dimensions)
-    # u = init(dimensions)
-    # b = init(1) |> first
     w = ones(dimensions)
-    u = ones(dimensions)
+    u = zeros(dimensions)
     b = 0
     return PlanarFlow( w, u, b, h )
 end
@@ -52,7 +48,7 @@ function Flow( dimensions::Int, length::Int, FlowType::DataType; h::Function=tan
     return Flow( [ FlowType( dimensions, h ) for _ in 1:length ] )
 end
 
-function (flow::Flow)(z::AbstractVector) where T
+function (flow::Flow)(z::AbstractVector)
     return foldl((l, r) -> r(l), flow.transforms, init=z)
 end
 

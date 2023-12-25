@@ -37,7 +37,7 @@ function create_loss_function( model::ResNetVAE )
 
         r = R(x, y)
 
-        @ignore V(x |> cpu, y |> cpu)
+        @ignore V(x, y)
         @ignore P(r, -e)
 
         return r + e
