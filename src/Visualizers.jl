@@ -13,20 +13,24 @@ function Visualizer(; host="0.0.0.0", port=parse(Int, ENV["VISUALIZER_PORT"]))
     return Visualizer(channel)
 end
 
-function (visualizer::Visualizer)(x::AbstractArray, y::AbstractArray)
+function (visualizer::Visualizer)(X::AbstractArray, Y::AbstractArray)
 
-    x, y = reshape(x[:, :, :, 1], size(x)[1:3]..., 1), reshape(y[:, :, :, 1], size(y)[1:3]..., 1)
+    for i in axes(x, 4)
+    
+        x, y = reshape(X[:, :, :, i], size(X)[1:3]..., 1), reshape(Y[:, :, :, i], size(Y)[1:3]..., 1)
 
-    x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
-    y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")
+        x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
+        y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")
 
-    x_bits = process_raw_image(x)
-    y_bits = process_raw_image(y)
+        x_bits = process_raw_image(x)
+        y_bits = process_raw_image(y)
 
-    images = [(info=x_info, bits=x_bits), (info=y_info, bits=y_bits)]
+        images = [(info=x_info, bits=x_bits), (info=y_info, bits=y_bits)]
 
-    message  = to_message( images )
+        message  = to_message( images )
 
-    put!( visualizer.channel, message )
+        put!( visualizer.channel, message )
+
+    end
 
 end
