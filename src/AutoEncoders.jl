@@ -7,6 +7,7 @@ using Flux.ChainRulesCore: @ignore_derivatives as @ignore
 import Flux.outputsize
 import Flux.trainmode!
 import LinearAlgebra: dot
+import Flux.gpu
 
 # VARIATIONAL FLOWS
 
@@ -20,68 +21,26 @@ abstract type Transform end
 end
 
 function PlanarFlow( dimensions::Int, h::Function=tanh )
-    init = (x...) -> rand( Normal(Float32(0), Float32(1)), x... )
-    w = init(dimensions)
-    u = init(dimensions)
-    b = init(1) |> first
+    # init = (x...) -> rand( Normal(Float32(0), Float32(1)), x... )
+    # w = init(dimensions)
+    # u = init(dimensions)
+    # b = init(1) |> first
+    w = ones(dimensions)
+    u = ones(dimensions)
+    b = 0
     return PlanarFlow( w, u, b, h )
 end
 
-function u_hat(w::T, u::T, û::T) where {T <: AbstractVector}
-
-    û .= u .+ ( (-1 + log( 1 + exp(u ⋅ w))) + u ⋅ w ) .* (w ./ (w ⋅ w))
-
-    return nothing
-
+function û(t::PlanarFlow)
+    return t.u .+ ( (-1 + log( 1 + exp(t.u ⋅ t.w))) + t.u ⋅ t.w ) .* (t.w ./ (t.w ⋅ t.w))
 end
 
-function run_flow(w::T, u::T, b::N, h::F, z::A) where {T <: AbstractVector, N <: Number, F <: Function, A <: AbstractMatrix}
-
-    x, y     = threadIdx().x, threadIdx().y
-    x_s, y_s = blockDim().x, blockDim().y
-
-    for i = x:x_s:size(z, 1)
-
-        wz = 0
-
-        for k = y:y_s:length(w)
-
-            wz += w[k] * z[k, i]
-
-        end
-
-        for k = y:y_s:size(y, 2)
-
-            z[i, k] += u[k] * h(wz)
-
-        end
-
-    end
-
-    # for i in axes(z, 2)
-
-    #     @inbounds z[:, i] .+= u .* h(w .* z[:, i] |> sum)
-
-    # end
-
-    return nothing
-
-end
-
-function (t::PlanarFlow)(z::AbstractMatrix)
-
-    û = similar(t.u)
-
-    @cuda u_hat(t.w, t.u, û)
-
-    @cuda run_flow(t.w, t.u, t.b, t.h, z)
-
-    return z
-    
+function (t::PlanarFlow)(z::AbstractVector)
+    return z + û(t) * t.h( t.w ⋅ z + t.b )
 end
 
 function ψ(t::PlanarFlow, z::AbstractVector)
-    g, _ = gradient( t.h, (t.w ⋅ z + t.b) )
+    g, = gradient( t.h, (t.w ⋅ z + t.b) )
     return g * t.w
 end
 
@@ -94,30 +53,34 @@ function Flow( dimensions::Int, length::Int, FlowType::DataType; h::Function=tan
 end
 
 function (flow::Flow)(z::AbstractVector) where T
-
-    return foldl((l, r) -> r(l), flow.transforms, init=reshape(z, length(z), 1))
-
+    return foldl((l, r) -> r(l), flow.transforms, init=z)
 end
 
-function (flow::Flow)(z_0::AbstractArray)
+function (flow::Flow)(z_0::T) where T <: Array
+
     s = size(z_0)
-    Z = [ z_0[:, i...] for i in Iterators.product(axes(z)[2:end]...) ]
+
+    z = [ z_0[:, i...] for i in Iterators.product(axes(z_0)[2:end]...) ]
 
     for transform in flow.transforms
 
-        Z = map(transform, Z )
+        z = map(transform, z)
 
     end
 
-    Z = reduce(hcat, Z)
+    z = reduce(hcat, z)
 
-    return reshape(Z, s...)
+    return reshape(z, s...)
+end
+
+function (flow::Flow)(z_0::T) where T <: CuArray
+    return flow( z_0 |> cpu ) |> gpu
 end
 
 Flux.@functor Flow (transforms, );
 
 # Free-Energy Bound
-function FEB( flow::Flow, z::Union{Flux.Zygote.Buffer, AbstractVector} )
+function FEB( flow::Flow, z::T ) where T <: Vector
 
     _, s = foldl( flow.transforms, init=(z, 0) ) do l, r
 
@@ -129,6 +92,22 @@ function FEB( flow::Flow, z::Union{Flux.Zygote.Buffer, AbstractVector} )
     end
 
     return -s
+end
+
+function FEB( flow::Flow, z::T ) where T <: CuVector
+    return FEB( flow, z |> cpu )
+end
+
+function FEB( flow::Flow, z::AbstractArray )
+
+    s = size(z)
+
+    z = [ FEB(flow, z[:, i...]) for i in Iterators.product(axes(z)[2:end]...) ]
+
+    z = reduce(hcat, z)
+
+    return reshape(z, s...)
+
 end
 
 # AUTOENCODERS

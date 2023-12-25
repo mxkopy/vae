@@ -15,6 +15,8 @@ end
 
 function (visualizer::Visualizer)(x::AbstractArray, y::AbstractArray)
 
+    x, y = x[:, :, :, 1], y[:, :, :, 1]
+
     x_info = add_info(x, height=size(x, 1), width=size(x, 2), name="input")
     y_info = add_info(y, height=size(y, 1), width=size(y, 2), name="output")
 

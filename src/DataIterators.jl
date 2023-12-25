@@ -131,7 +131,7 @@ end
 
 function BatchIterator{AudioReader}( directory::String, sample_size::Int, batches::Int )
 
-    return BatchIterator( AudioReader( directory, sample_size ), batches )
+    return BatchIterator( AudioReader( directory, sample_size ), batches, x -> reduce((l, r) -> cat(l, r, dims=4), x) )
     
 end
 

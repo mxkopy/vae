@@ -97,7 +97,14 @@ end
     μ
     σ
     flow
-    ResNetVAE(args...; precision=Float32, device=gpu) = new( (args .|> Device{precision, device})... )
+    ResNetVAE(encoder, decoder, μ, σ, flow; precision=Float32, device=gpu) = new(
+        encoder |> Device{precision, device}, 
+        decoder |> Device{precision, device}, 
+        μ |> Device{precision, device}, 
+        σ |> Device{precision, device}, 
+        flow |> Device{precision, cpu}
+    )
+
 end
 
 function ResNetVAE( model_size; flow_length=64, flow_type=PlanarFlow, precision=Float32, device=gpu )

@@ -24,7 +24,7 @@ end
 
 if "data" in ARGS
 
-    iterator = BatchIterator( ImageReader(ENV["DATA_TARGET"]), parse(Int, ENV["BATCHES"]) )
+    iterator = BatchIterator{ImageReader}( ENV["DATA_TARGET"], parse(Int, ENV["BATCHES"]) )
 
     DataServer( iterator, host="0.0.0.0", port=parse(Int, ENV["DATA_PORT"]) )
 
@@ -34,7 +34,7 @@ end
 
 if "training" in ARGS
 
-    P, D = Float32, cpu
+    P, D = Float32, gpu
 
     N = 1000
 
