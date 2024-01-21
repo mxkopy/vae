@@ -13,12 +13,8 @@ struct ELBOLoss{T <: AutoEncoder}
     model::T
 end
 
-function (elbo::ELBOLoss{ResNetVAE})(z_0::AbstractArray{P}) where P
-    s::P = 0
-    for c in Base.Iterators.product( axes(z_0)[2:end]... )
-        s += FEB( elbo.model.flow.layer, z_0[:, c...] )
-    end
-    return s
+function (elbo::ELBOLoss{ResNetVAE})(FEB::AbstractArray{P}) where P
+    return sum(FEB)
 end
 
 function create_loss_function( model::ResNetVAE )
@@ -31,9 +27,9 @@ function create_loss_function( model::ResNetVAE )
 
     return function ( x::AbstractArray )
 
-        e, μ, σ, z_0, f, y = model(x)
+        e, μ, σ, z_0, f, y, FEB = model(x)
 
-        e = E(z_0)
+        e = E(FEB)
 
         r = R(x, y)
 

@@ -15,7 +15,7 @@ end
 
 function (visualizer::Visualizer)(X::AbstractArray, Y::AbstractArray)
 
-    for i in axes(x, 4)
+    for i in axes(X, 4)
     
         x, y = reshape(X[:, :, :, i], size(X)[1:3]..., 1), reshape(Y[:, :, :, i], size(Y)[1:3]..., 1)
 

@@ -49,24 +49,24 @@ function Flow( dimensions::Int, length::Int, FlowType::DataType; h::Function=tan
 end
 
 function (flow::Flow)(z::AbstractVector)
-    return foldl((l, r) -> r(l), flow.transforms, init=z)
+    y, s = foldl(flow.transforms, init=(z, 0)) do l, r
+        z, c = l
+        y = r(z)
+        c = c + log( 1 + û(r) ⋅ ψ(r, z) )
+        return y, c
+    end
+    return y, -s
 end
 
-function (flow::Flow)(z_0::T) where T <: Array
+function (flow::Flow)(z_0::T) where T <: AbstractArray
 
-    s = size(z_0)
+    indices = Iterators.product(axes(z_0)[2:end]...)
 
-    z = [ z_0[:, i...] for i in Iterators.product(axes(z_0)[2:end]...) ]
-
-    for transform in flow.transforms
-
-        z = map(transform, z)
-
+    z, f = mapreduce(((l_z, l_f), (r_z, r_f)) -> (hcat(l_z, r_z), vcat(l_f, r_f)), indices) do index
+        return flow(z_0[:, index...])
     end
 
-    z = reduce(hcat, z)
-
-    return reshape(z, s...)
+    return reshape(z, size(z_0)), reshape(f, size(z_0)[2:end])
 end
 
 function (flow::Flow)(z_0::T) where T <: CuArray
@@ -74,37 +74,6 @@ function (flow::Flow)(z_0::T) where T <: CuArray
 end
 
 Flux.@functor Flow (transforms, );
-
-# Free-Energy Bound
-function FEB( flow::Flow, z::T ) where T <: Vector
-
-    _, s = foldl( flow.transforms, init=(z, 0) ) do l, r
-
-        z = l[1]
-        c = l[2]
-
-        return r(z), c + log( 1 + û(r) ⋅ ψ(r, z) )
-
-    end
-
-    return -s
-end
-
-function FEB( flow::Flow, z::T ) where T <: CuVector
-    return FEB( flow, z |> cpu )
-end
-
-function FEB( flow::Flow, z::AbstractArray )
-
-    s = size(z)
-
-    z = [ FEB(flow, z[:, i...]) for i in Iterators.product(axes(z)[2:end]...) ]
-
-    z = reduce(hcat, z)
-
-    return reshape(z, s...)
-
-end
 
 # AUTOENCODERS
 
@@ -124,10 +93,10 @@ function (model::AutoEncoder)(data::AbstractArray)
     M          = model.μ(E)
     S          = model.σ(E)
     Z          = sample_gaussian.(M, S)
-    F          = model.flow(Z)
+    F, FEB     = model.flow(Z)
     Y          = model.decoder(F)
 
-    return (E=E, M=M, S=S, Z=Z, F=F, Y=Y)
+    return (E=E, M=M, S=S, Z=Z, F=F, Y=Y, FEB=FEB)
 
 end
 
