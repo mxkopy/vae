@@ -5,5 +5,5 @@
 *.bson
 *.jpeg
 *.jpg
-src/test.jl
 models
+
